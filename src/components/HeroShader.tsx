@@ -1,18 +1,10 @@
 /**
  * HeroShader — WebGL puro, portado 1:1 do index.html original.
  * client:only="react"  →  nunca executa no servidor Astro.
- *
- * Uniforms preservados:
- *   u_resolution, u_time, u_mouse, u_progress
- *
- * Fase 2: u_progress fixo em 0 (sem scroll-jacking).
- * O ref exposto via useImperativeHandle permite que fases futuras
- * injetem o progresso sem re-render do React.
  */
 
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-/* ─── SHADERS (100% idênticos ao original) ───────────────────────── */
 const VERT_SRC = `
 attribute vec2 a_position;
 void main() {
@@ -133,7 +125,6 @@ void main() {
 }
 `;
 
-/* ─── Helpers ────────────────────────────────────────────────────── */
 function compileShader(gl: WebGLRenderingContext, type: number, src: string) {
   const s = gl.createShader(type);
   if (!s) return null;
@@ -147,19 +138,17 @@ function compileShader(gl: WebGLRenderingContext, type: number, src: string) {
   return s;
 }
 
-/* ─── Handle exposto para fases futuras ──────────────────────────── */
 export interface HeroShaderHandle {
   setProgress: (p: number) => void;
 }
 
-/* ─── Componente ─────────────────────────────────────────────────── */
 const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const progressRef = useRef(0); // mutável, sem re-render
+  const progressRef = useRef(0);
 
   useImperativeHandle(ref, () => ({
-    setProgress: (p: number) => { 
-      progressRef.current = Number.isNaN(p) ? 0 : p; 
+    setProgress: (p: number) => {
+      progressRef.current = Number.isNaN(p) ? 0 : p;
     },
   }));
 
@@ -181,26 +170,35 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
     let rafId = 0;
     let isContextLost = false;
 
-    /* Mouse — lerp suave (0.08) */
     let targetMouseX = 0, targetMouseY = 0;
     let currentMouseX = 0, currentMouseY = 0;
 
-    const onMouseMove = (e: MouseEvent) => {
+    const setPointer = (clientX: number, clientY: number) => {
       const minD = Math.min(window.innerWidth, window.innerHeight);
       if (minD <= 0) return;
-      targetMouseX =  (e.clientX - 0.5 * window.innerWidth)  / minD;
-      targetMouseY = -(e.clientY - 0.5 * window.innerHeight) / minD;
+      targetMouseX =  (clientX - 0.5 * window.innerWidth)  / minD;
+      targetMouseY = -(clientY - 0.5 * window.innerHeight) / minD;
     };
 
-    /* Resize com trava de segurança para dimensões zeradas */
+    const onMouseMove = (e: MouseEvent) => setPointer(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let cw = 0, ch = 0;
 
+    /** Fallback para mobile: usa viewport quando canvas ainda não tem layout. */
     const resize = () => {
       if (!canvas || !gl || isContextLost) return;
-      const clientW = canvas.clientWidth;
-      const clientH = canvas.clientHeight;
-      if (clientW === 0 || clientH === 0) return;
+
+      let clientW = canvas.clientWidth;
+      let clientH = canvas.clientHeight;
+      if (clientW <= 0 || clientH <= 0) {
+        clientW = window.innerWidth;
+        clientH = window.innerHeight;
+      }
+      if (clientW <= 0 || clientH <= 0) return;
 
       const dw = Math.round(clientW * dpr);
       const dh = Math.round(clientH * dpr);
@@ -210,11 +208,10 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
         canvas.height = dh;
         gl.viewport(0, 0, dw, dh);
       }
-      cw = dw; 
+      cw = dw;
       ch = dh;
     };
 
-    /* Inicialização WebGL e Shaders */
     const initGL = () => {
       if (!canvas) return false;
 
@@ -223,7 +220,6 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
 
       if (!gl) return false;
 
-      /* prefers-reduced-motion */
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReduced) {
         gl.clearColor(0.04, 0.04, 0.047, 1);
@@ -266,7 +262,6 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       return true;
     };
 
-    /* Cleanup limpo das instâncias GL */
     const cleanupGL = () => {
       if (!gl) return;
       if (program) {
@@ -283,22 +278,17 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       buf = null;
     };
 
-    /* Handlers de Perda e Restauração de Contexto WebGL */
     const handleContextLost = (e: Event) => {
-      e.preventDefault(); // Previne o abandono definitivo do contexto pelo navegador
+      e.preventDefault();
       isContextLost = true;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = 0;
       cleanupGL();
-      console.warn('[HeroShader] WebGL Context Lost intercepted.');
     };
 
     const handleContextRestored = () => {
-      console.log('[HeroShader] WebGL Context Restored! Re-initializing shader...');
       isContextLost = false;
-      if (initGL()) {
-        startLoop();
-      }
+      if (initGL()) startLoop();
     };
 
     canvas.addEventListener('webglcontextlost', handleContextLost, false);
@@ -311,24 +301,24 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       };
     }
 
-    /* Loop RAF protegido contra NaN */
     const startTime = performance.now();
 
     const render = (now: number) => {
       if (isContextLost || !gl || !program) return;
+
+      if (cw <= 0 || ch <= 0) resize();
 
       const elapsed = (now - startTime) / 1000;
 
       currentMouseX += (targetMouseX - currentMouseX) * 0.08;
       currentMouseY += (targetMouseY - currentMouseY) * 0.08;
 
-      /* Validação estrita de NaN para não corromper o pipeline da GPU */
-      const safeCw      = (Number.isNaN(cw) || cw <= 0) ? canvas.width || 1 : cw;
-      const safeCh      = (Number.isNaN(ch) || ch <= 0) ? canvas.height || 1 : ch;
-      const safeMouseX  = Number.isNaN(currentMouseX) ? 0 : currentMouseX;
-      const safeMouseY  = Number.isNaN(currentMouseY) ? 0 : currentMouseY;
-      const safeProgress= Number.isNaN(progressRef.current) ? 0 : progressRef.current;
-      const safeTime    = Number.isNaN(elapsed) ? 0 : elapsed;
+      const safeCw       = (Number.isNaN(cw) || cw <= 0) ? canvas.width  || window.innerWidth  : cw;
+      const safeCh       = (Number.isNaN(ch) || ch <= 0) ? canvas.height || window.innerHeight : ch;
+      const safeMouseX   = Number.isNaN(currentMouseX) ? 0 : currentMouseX;
+      const safeMouseY   = Number.isNaN(currentMouseY) ? 0 : currentMouseY;
+      const safeProgress = Number.isNaN(progressRef.current) ? 0 : progressRef.current;
+      const safeTime     = Number.isNaN(elapsed) ? 0 : elapsed;
 
       gl.useProgram(program);
       gl.uniform2f(uRes,      safeCw, safeCh);
@@ -348,31 +338,35 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
     startLoop();
 
     window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('resize', resize);
 
-    /* Tratamento de visibilidade de aba */
+    /* Re-dimensiona quando o site aparece após o loader */
+    const siteEl = document.getElementById('site');
+    const onSiteVisible = () => requestAnimationFrame(resize);
+    siteEl?.addEventListener('transitionend', onSiteVisible);
+    if (siteEl?.classList.contains('is-visible')) onSiteVisible();
+
     const onVisibility = () => {
       if (document.hidden) {
-        if (rafId) {
-          cancelAnimationFrame(rafId);
-          rafId = 0;
-        }
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       } else if (!isContextLost) {
+        resize();
         startLoop();
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
 
-    /* Expõe setProgress para o ScrollEngine via window */
     (window as any).__shaderSetProgress = (p: number) => {
       progressRef.current = Number.isNaN(p) ? 0 : p;
     };
 
-    /* Cleanup completo ao desmontar */
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('resize', resize);
+      siteEl?.removeEventListener('transitionend', onSiteVisible);
       document.removeEventListener('visibilitychange', onVisibility);
       canvas.removeEventListener('webglcontextlost', handleContextLost);
       canvas.removeEventListener('webglcontextrestored', handleContextRestored);

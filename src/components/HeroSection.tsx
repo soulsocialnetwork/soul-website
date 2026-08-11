@@ -33,6 +33,7 @@ export default function HeroSection() {
           width={60}
           height={20}
           decoding="async"
+          fetchPriority="high"
         />
       </nav>
 
@@ -69,6 +70,7 @@ export default function HeroSection() {
               preload="metadata"
               width={38}
               height={38}
+              onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}
             >
               <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
             </video>
