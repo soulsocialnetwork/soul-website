@@ -14,33 +14,28 @@ export default function AudioEngine() {
   useEffect(() => {
     let isMuted = false;
     let wasInTunnel = false;
-    /** Só true após clique/toque/tecla — bloqueia AudioContext antes disso. */
-    let gestureUnlocked = false;
 
-    function ensureUnlocked(): AudioContext | null {
-      if (!gestureUnlocked) return null;
+    /** Cria e resume o AudioContext — APENAS dentro de handlers de gesto. */
+    function unlockFromGesture(): void {
       if (!ctxRef.current) {
         ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         bgMusicRef.current?.load();
         shuaAudioRef.current?.load();
       }
       if (ctxRef.current.state === 'suspended') {
-        ctxRef.current.resume().catch(() => {});
+        void ctxRef.current.resume();
       }
-      return ctxRef.current;
     }
 
-    function getAudioCtxIfReady(): AudioContext | null {
-      if (!gestureUnlocked || !ctxRef.current) return null;
-      if (ctxRef.current.state === 'suspended') {
-        ctxRef.current.resume().catch(() => {});
-      }
-      return ctxRef.current;
+    /** Retorna ctx só se já estiver running — nunca cria/resume fora de gesto. */
+    function getRunningCtx(): AudioContext | null {
+      const ctx = ctxRef.current;
+      if (!ctx || ctx.state !== 'running') return null;
+      return ctx;
     }
 
     const onFirstInteraction = () => {
-      gestureUnlocked = true;
-      ensureUnlocked();
+      unlockFromGesture();
       document.removeEventListener('click', onFirstInteraction, true);
       document.removeEventListener('touchstart', onFirstInteraction, true);
       document.removeEventListener('keydown', onFirstInteraction, true);
@@ -81,7 +76,7 @@ export default function AudioEngine() {
 
     function playWindBurst() {
       if (isMuted) return;
-      const ctx = ensureUnlocked();
+      const ctx = getRunningCtx();
       if (!ctx) return;
       try {
         const duration = 2.0;
@@ -117,7 +112,6 @@ export default function AudioEngine() {
 
     (window as any).__playBackgroundMusic = () => {
       if (!bgMusicRef.current) return;
-      ensureUnlocked();
       bgMusicRef.current.volume = 0;
       bgMusicRef.current.play()
         .then(() => {
@@ -133,10 +127,9 @@ export default function AudioEngine() {
     };
 
     (window as any).updateWormholeAudio = (progress: number, elapsed: number) => {
-      // ScrollEngine chama isso a ~60fps desde o mount — sair cedo se ainda não houve gesto.
-      if (!gestureUnlocked) return;
+      if (!ctxRef.current) return;
       if (!bgMusicRef.current || !shuaAudioRef.current) return;
-      const ctx = ensureUnlocked();
+      const ctx = getRunningCtx();
       if (!ctx) return;
       initAudioNodes(ctx);
 
@@ -188,7 +181,7 @@ export default function AudioEngine() {
 
     const playClickSound = () => {
       if (isMuted) return;
-      const ctx = ensureUnlocked();
+      const ctx = getRunningCtx();
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
@@ -205,7 +198,7 @@ export default function AudioEngine() {
 
     const playHoverSound = () => {
       if (isMuted) return;
-      const ctx = getAudioCtxIfReady();
+      const ctx = getRunningCtx();
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
@@ -222,7 +215,7 @@ export default function AudioEngine() {
 
     (window as any).__playLogoPlin = () => {
       if (isMuted) return;
-      const ctx = ensureUnlocked();
+      const ctx = getRunningCtx();
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
@@ -254,6 +247,7 @@ export default function AudioEngine() {
       playHoverSound();
     };
     const onClick = (e: MouseEvent) => {
+      unlockFromGesture();
       if ((e.target as HTMLElement).closest(SELECTOR)) playClickSound();
     };
 

@@ -78,9 +78,17 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     if (!ctx) return;
 
     let rafId = 0;
+    let running = true;
     const drawNoise = () => {
-      const w = canvas.width  = canvas.offsetWidth;
-      const h = canvas.height = canvas.offsetHeight;
+      if (!running) return;
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      if (w <= 0 || h <= 0) {
+        rafId = requestAnimationFrame(drawNoise);
+        return;
+      }
+      canvas.width  = w;
+      canvas.height = h;
       const imgData = ctx.createImageData(w, h);
       const data    = imgData.data;
       for (let i = 0; i < data.length; i += 4) {
@@ -94,8 +102,13 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     rafId = requestAnimationFrame(drawNoise);
 
     const onVisibility = () => {
-      if (document.hidden) cancelAnimationFrame(rafId);
-      else rafId = requestAnimationFrame(drawNoise);
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(rafId);
+      } else {
+        running = true;
+        rafId = requestAnimationFrame(drawNoise);
+      }
     };
     document.addEventListener('visibilitychange', onVisibility);
   }, []);
@@ -154,6 +167,7 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       scale: 1,
       duration: 0.7,
       ease: 'power3.out',
+      onStart: startGrain,
     });
 
     /* ── STEP 2: iniciar vídeo ─────────────────────────────────── */
@@ -271,7 +285,7 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     setTimeout(() => {
       loader.style.display = 'none';
     }, 900);
-  }, [playLogoPlin, playBackgroundMusic, onEntered]);
+  }, [playLogoPlin, playBackgroundMusic, onEntered, startGrain]);
 
   /* ── Click no botão "entrar." ────────────────────────────────── */
   const handleEnter = useCallback(async () => {
@@ -295,9 +309,8 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       });
     }
 
-    startGrain();
     runSequence();
-  }, [runSequence, startGrain]);
+  }, [runSequence]);
 
   /* ── Hover do botão enter-gate ───────────────────────────────── */
   // O CSS cuida do hover (transform scale(1.04)) — apenas som via global handler
