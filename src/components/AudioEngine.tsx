@@ -15,7 +15,7 @@ export default function AudioEngine() {
     let isMuted = false;
     let wasInTunnel = false;
 
-    /** Cria e resume o AudioContext — APENAS dentro de handlers de gesto. */
+    // audiocontext só após gesto do usuário
     function unlockFromGesture(): void {
       if (!ctxRef.current) {
         ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -27,7 +27,7 @@ export default function AudioEngine() {
       }
     }
 
-    /** Retorna ctx só se já estiver running — nunca cria/resume fora de gesto. */
+    // nunca cria/retoma fora de gesto
     function getRunningCtx(): AudioContext | null {
       const ctx = ctxRef.current;
       if (!ctx || ctx.state !== 'running') return null;

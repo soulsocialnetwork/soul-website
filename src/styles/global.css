@@ -6,7 +6,6 @@
 @import "@fontsource/inter/700.css";
 @import "@fontsource/inter/800.css";
 
-/* ─── Design Tokens ─────────────────────────────────────────────── */
 @layer base {
   :root {
     --bg: #0a0a0c;
@@ -28,7 +27,7 @@
     overflow: hidden;
   }
 
-  /* Oculta cursor nativo em dispositivos de precisão */
+ 
   @media (pointer: fine) {
     *, html, body,
     #loader, button, .enter-gate,
@@ -38,7 +37,6 @@
   }
 }
 
-/* ─── Tailwind theme extension via CSS custom properties ─────────── */
 @theme {
   --color-soul-bg:      #0a0a0c;
   --color-soul-night:   #050506;
@@ -49,7 +47,6 @@
   --font-body:    'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ─── LOADER ─────────────────────────────────────────────────────── */
 #loader {
   position: fixed;
   inset: 0;
@@ -117,7 +114,6 @@
 }
 .audio-hint.is-out { opacity: 0; }
 
-/* ─── SCROLL INDICATOR ───────────────────────────────────────────── */
 .scroll-indicator {
   position: fixed;
   bottom: 6vh; left: 50%;
@@ -142,7 +138,6 @@
 .scroll-indicator svg  { width:24px; height:24px; fill:none; stroke:#000; stroke-width:1.5; }
 .scroll-indicator span { font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:#000; font-weight:500; }
 
-/* ─── VIDEO FRAME (loader intro) ─────────────────────────────────── */
 .video-frame {
   position: relative;
   z-index: 2;
@@ -190,7 +185,6 @@
 .logo-wrap.is-in { opacity:1; transform:scale(1); }
 .logo-img { width:100%; display:block; }
 
-/* ─── SITE / HERO ────────────────────────────────────────────────── */
 #site {
   height:100%; width:100%;
   min-height:100svh;
@@ -212,7 +206,6 @@
 .hero-shader-bg    { position:absolute; inset:0; pointer-events:none; z-index:0; display:block; width:100%; height:100%; }
 .hero-shader-overlay { position:absolute; inset:0; background:rgba(10,10,12,0.45); pointer-events:none; z-index:1; }
 
-/* ─── CURSOR LENTE DE VIDRO ──────────────────────────────────────── */
 .cursor-glass {
   position:fixed; top:0; left:0;
   width:6px; height:6px; margin:-3px 0 0 -3px;
@@ -239,7 +232,6 @@
 }
 .cursor-glass.is-visible { opacity:1; }
 
-/* ─── HERO NAV / ACTIONS ─────────────────────────────────────────── */
 .hero-nav    { position:fixed; top:40px; left:48px; z-index:60; mix-blend-mode:difference; }
 .hero-logo   { display:block; width:60px; height:auto; }
 .hero-actions { position:fixed; top:40px; right:48px; z-index:60; display:flex; align-items:center; gap:12px; }
@@ -262,12 +254,10 @@
 .sound-toggle:hover     { background:rgba(255,255,255,0.25); color:#ffffff; transform:scale(1.08); }
 .sound-toggle.is-muted  { opacity:0.45; }
 
-/* ─── HERO CONTENT ───────────────────────────────────────────────── */
 .hero-content  { position:absolute; left:48px; bottom:64px; z-index:3; max-width:62%; }
 .hero-eyebrow  { font-family:var(--body); font-style:italic; font-size:13px; font-weight:500; letter-spacing:0.06em; color:var(--fg-dim); text-transform:uppercase; margin-bottom:18px; }
 .hero-headline { font-family:var(--display); font-weight:800; text-transform:uppercase; font-size:clamp(34px,5.4vw,78px); line-height:1.05; letter-spacing:-0.01em; color:var(--fg); }
 
-/* ─── COSMIC MARKERS ─────────────────────────────────────────────── */
 .cosmic-markers { position:absolute; inset:0; pointer-events:none; z-index:2; }
 .milky-way-marker { top:55%; left:65%; }
 .marker {
@@ -296,7 +286,7 @@
 .marker:hover .marker-label { opacity:1; transform:translateX(0); }
 .soulzinho-fixed {
   position:fixed; top:50%; right:8vw;
-  transform:translateY(-50%) translateZ(0); /* força layer própria desde o início */
+  transform:translateY(-50%) translateZ(0);
   width:clamp(220px,26vw,420px); height:auto;
   pointer-events:none; opacity:0; z-index:59;
   animation:soulzinho-float 5s ease-in-out infinite alternate;
@@ -304,43 +294,26 @@
 }
 .soulzinho-fixed.is-visible { opacity:0.9; }
 
-/* filtro direto no elemento de vídeo, não no wrapper */
 .soul-video-layer {
   width:100%;
   display:block;
-  opacity:0; /* fica invisível até .is-ready (primeiro frame já filtrado) */
+  opacity:0;
   transition:opacity 0.15s linear;
   filter:grayscale(1) contrast(1000%) invert(1) !important;
   -webkit-filter:grayscale(1) contrast(1000%) invert(1) !important;
   will-change:filter;
-  transform:translateZ(0); /* garante composição própria já filtrada */
+  transform:translateZ(0);
   backface-visibility:hidden;
 }
 .soul-video-layer.is-ready { opacity:1; }
-.soul-thought {
-  position:absolute; left:50%; bottom:-30px;
-  transform:translateX(-50%);
-  width:max-content; max-width:220px;
-  text-align:center; font-family:var(--body);
-  font-style:italic; font-weight:400;
-  font-size:12.5px; line-height:1.3;
-  letter-spacing:0.005em; color:rgba(0,0,0,0.55);
-  opacity:0; transition:opacity 0.4s ease;
-  pointer-events:none;
-}
-.soul-thought.is-visible { opacity:1; }
 
 @media (max-width: 900px) {
-  /* O soulzinho flutuante fixo sai de cena no mobile — ele passa a viver
-     como avatarzinho dentro do balão de fala (.story-avatar, ver STORY UI). */
   .soulzinho-fixed { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .soul-thought { transition-duration:0.01ms !important; }
   .soulzinho-fixed.is-negative-active { filter:grayscale(1) contrast(1000%) invert(1); }
 }
 
-/* ─── STORY UI ───────────────────────────────────────────────────── */
 .story-ui {
   position:fixed;
   right:calc(8vw + clamp(220px,26vw,420px) + 24px);
@@ -368,8 +341,6 @@
   clip-path:polygon(0 0,0 100%,100% 50%);
 }
 
-/* Avatarzinho do soulzinho dentro do balão — só existe visualmente no mobile,
-   onde o soulzinho-fixed flutuante é escondido (ver seção MOBILE acima). */
 .story-avatar { display: none; }
 
 .story-text { font-family:var(--body); font-size:15.5px; line-height:1.5; font-weight:500; color:#000; min-height:1.5em; }
@@ -438,7 +409,6 @@
   .story-panel { padding:16px 18px 16px 62px; }
   .story-continue-btn { width:100%; justify-content:center; padding:13px 22px; }
 
-  /* Avatarzinho do soulzinho, tipo chat, no canto do balão */
   .story-avatar {
     display: block;
     position: absolute;
@@ -464,19 +434,16 @@
   .story-panel.is-negative-active { filter:none; }
 }
 
-/* ─── SOULZINHO FLOAT KEYFRAME ───────────────────────────────────── */
 @keyframes soulzinho-float {
   0%   { transform:translateY(-3px); }
   100% { transform:translateY(3px); }
 }
 
-/* ─── WARP OVERLAY ───────────────────────────────────────────────── */
 .warp-overlay {
   position:fixed; inset:0; background:#ffffff;
   opacity:0; pointer-events:none; z-index:40;
 }
 
-/* ─── SECTIONS TRACK ─────────────────────────────────────────────── */
 .sections-track {
   position:fixed; inset:0; z-index:45;
   display:flex; flex-direction:row; align-items:stretch;
@@ -497,21 +464,25 @@
 .next-section::-webkit-scrollbar { display:none; }
 .next-starfield { display:none; }
 
-/* ─── SWISS EDITORIAL ────────────────────────────────────────────── */
 .swiss-body { position:relative; z-index:1; max-width:820px; margin:16px 0; display:flex; flex-direction:column; gap:28px; }
 
-.next-section.is-current-section,
+.next-section.is-current-section:not(#nextSection7),
 body.in-white-section .story-panel,
 body.in-white-section .hero-nav,
 body.in-white-section .soulzinho-fixed {
   filter: url(#underwaterWave);
 }
 
+#nextSection7.is-current-section .swiss-body {
+  filter: url(#underwaterWave);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .next-section.is-current-section,
+  .next-section.is-current-section:not(#nextSection7),
   body.in-white-section .story-panel,
   body.in-white-section .hero-nav,
-  body.in-white-section .soulzinho-fixed {
+  body.in-white-section .soulzinho-fixed,
+  #nextSection7.is-current-section .swiss-body {
     filter: none;
   }
 }
@@ -519,10 +490,14 @@ body.in-white-section .soulzinho-fixed {
 .swiss-stats-grid  { display:grid; grid-template-columns:repeat(2,1fr); gap:40px; margin:8px 0 16px; }
 .swiss-stat-item   { display:flex; flex-direction:column; gap:8px; }
 .swiss-stat-num    { font-size:clamp(48px,6vw,96px); font-weight:800; letter-spacing:-0.04em; line-height:0.9; }
-.swiss-stat-label  { font-size:clamp(14px,1.3vw,17px); font-weight:400; color:rgba(0,0,0,0.7); line-height:1.25; }
+.swiss-stat-label  { font-size:clamp(14px,1.3vw,17px); font-weight:400; color:rgba(0,0,0,0.84); line-height:1.25; }
 .swiss-paragraph   { font-size:clamp(18px,2vw,28px); line-height:1.35; font-weight:400; letter-spacing:-0.02em; color:#000; }
-.swiss-source      { font-size:12px; font-weight:500; color:rgba(0,0,0,0.55); text-transform:uppercase; letter-spacing:0.04em; margin-top:-12px; }
+.swiss-paragraph-body { font-size:clamp(15px,1.6vw,19px); line-height:1.55; font-weight:400; letter-spacing:-0.01em; color:#000; }
+.swiss-paragraph-body + .swiss-paragraph-body { margin-top:-8px; }
+.swiss-source      { font-size:12px; font-weight:500; color:rgba(0,0,0,0.66); text-transform:uppercase; letter-spacing:0.04em; margin-top:-12px; }
 .swiss-question    { font-size:clamp(20px,2.4vw,32px); font-weight:600; letter-spacing:-0.02em; margin-top:8px; }
+.swiss-eyebrow     { font-size:12px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(0,0,0,0.48); margin-bottom:2px; }
+.swiss-title       { font-family:var(--display); font-weight:800; text-transform:uppercase; font-size:clamp(22px,2.6vw,32px); letter-spacing:-0.02em; line-height:1.05; margin-bottom:2px; }
 
 @media (max-width: 768px) {
   .next-section { padding:96px 20px 24px; }
@@ -532,8 +507,11 @@ body.in-white-section .soulzinho-fixed {
 .next-section.section-negative     { background:#000; color:#fff; }
 .section-negative .swiss-stat-label { color:rgba(255,255,255,0.65); }
 .section-negative .swiss-paragraph  { color:#fff; }
+.section-negative .swiss-paragraph-body { color:#fff; }
 .section-negative .swiss-source     { color:rgba(255,255,255,0.65); }
 .section-negative .swiss-question   { color:#fff; }
+.section-negative .swiss-eyebrow    { color:rgba(255,255,255,0.45); }
+.section-negative .swiss-title      { color:#fff; }
 
 .swiss-headline {
   font-family:var(--display); font-weight:800; text-transform:uppercase;
@@ -546,22 +524,63 @@ body.in-white-section .soulzinho-fixed {
   font-family:var(--display); font-weight:800; text-transform:uppercase;
   font-size:clamp(20px,2.1vw,28px); letter-spacing:-0.02em; line-height:1.05;
 }
-.swiss-concept-text { font-size:clamp(14px,1.3vw,17px); font-weight:400; line-height:1.3; color:rgba(0,0,0,0.68); }
+.swiss-concept-text { font-size:clamp(14px,1.3vw,17px); font-weight:400; line-height:1.3; color:rgba(0,0,0,0.82); }
 .section-negative .swiss-concept-text { color:rgba(255,255,255,0.68); }
 
 @media (max-width: 900px) { .swiss-concept-grid { grid-template-columns:1fr; gap:24px; } }
 
 .swiss-footer-body   { justify-content:space-between; height:100%; flex:1; }
+.swiss-footer-top    { display:flex; flex-direction:column; gap:26px; }
 .swiss-footer-bottom { display:flex; flex-direction:column; gap:10px; padding-top:24px; margin-top:auto; }
-.swiss-footer-slogan  { font-size:clamp(14px,1.4vw,17px); font-weight:600; letter-spacing:-0.01em; color:rgba(0,0,0,0.75); }
-.swiss-footer-credits { font-size:12px; line-height:1.6; color:rgba(0,0,0,0.55); border-top:1px solid rgba(0,0,0,0.12); padding-top:14px; }
-/* ─── FASE 7: POLISH & RESPONSIVIDADE ────────────────────────────── */
+.swiss-footer-slogan  { font-size:clamp(14px,1.4vw,17px); font-weight:600; letter-spacing:-0.01em; color:rgba(0,0,0,0.9); }
+.swiss-footer-manifest { font-size:clamp(13px,1.3vw,15px); line-height:1.6; font-weight:400; font-style:italic; color:rgba(0,0,0,0.84); border-left:2px solid rgba(0,0,0,0.18); padding-left:16px; max-width:640px; margin:0; }
+.swiss-footer-credits { font-size:12px; line-height:1.6; color:rgba(0,0,0,0.66); border-top:1px solid rgba(0,0,0,0.14); padding-top:14px; }
+.section-negative .swiss-footer-slogan   { color:rgba(255,255,255,0.75); }
+.section-negative .swiss-footer-manifest { color:rgba(255,255,255,0.75); border-left-color:rgba(255,255,255,0.2); }
+.section-negative .swiss-footer-credits  { color:rgba(255,255,255,0.55); border-top-color:rgba(255,255,255,0.12); }
 
-/* Safe area para notch/dynamic island */
+#nextSection7 {
+  padding: 96px 48px 40px;
+  gap: 0;
+}
+#nextSection7 .swiss-body {
+  max-width: 680px;
+  gap: 0;
+  margin: 0;
+  justify-content: flex-start;
+  height: auto;
+  flex: none;
+}
+#nextSection7 .swiss-footer-top { gap: 10px; }
+#nextSection7 .swiss-paragraph-body {
+  font-size: clamp(14px, 1.35vw, 16px);
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.88);
+}
+#nextSection7 .swiss-paragraph-body + .swiss-paragraph-body { margin-top: 10px; }
+#nextSection7 .swiss-paragraph-body strong { font-weight: 600; }
+#nextSection7 .swiss-footer-bottom {
+  padding-top: 22px;
+  gap: 8px;
+  margin-top: 0;
+}
+#nextSection7 .swiss-footer-slogan {
+  font-size: clamp(13px, 1.25vw, 15px);
+}
+#nextSection7 .swiss-footer-manifest {
+  font-size: clamp(12px, 1.15vw, 14px);
+  line-height: 1.52;
+  padding-left: 12px;
+  max-width: 100%;
+}
+#nextSection7 .swiss-footer-credits {
+  font-size: 11px;
+  padding-top: 8px;
+}
+
 .hero-nav    { top: max(40px, env(safe-area-inset-top, 40px)); left: max(48px, env(safe-area-inset-left, 48px)); }
 .hero-actions { top: max(40px, env(safe-area-inset-top, 40px)); right: max(48px, env(safe-area-inset-right, 48px)); }
 
-/* ─── MOBILE PEQUENO (<480px) */
 @media (max-width: 480px) {
   .enter-gate { font-size: 26px; letter-spacing: 0.3em; padding: 12px 24px 12px calc(24px + 0.3em); }
   .audio-hint { font-size: 9px; gap: 6px; }
@@ -576,10 +595,14 @@ body.in-white-section .soulzinho-fixed {
   .next-section { padding: 80px 16px 20px; }
   .swiss-stats-grid { grid-template-columns: 1fr; gap: 16px; }
   .swiss-concept-grid { grid-template-columns: 1fr; gap: 16px; }
+  .swiss-footer-top { gap: 20px; }
+  #nextSection7 { padding: 80px 16px 24px; }
+  #nextSection7 .swiss-paragraph-body { font-size: 14px; line-height: 1.48; }
+  #nextSection7 .swiss-footer-bottom { padding-top: 18px; }
+  #nextSection7 .swiss-footer-manifest { font-size: 12px; }
   .video-frame { width: min(85vmin, 340px); height: min(85vmin, 340px); }
 }
 
-/* ─── MOBILE GRANDE / LANDSCAPE (481–768px) */
 @media (min-width: 481px) and (max-width: 768px) {
   .hero-content  { left: 32px; bottom: 56px; max-width: 85%; }
   .hero-nav      { left: 32px; }
@@ -587,14 +610,12 @@ body.in-white-section .soulzinho-fixed {
   .next-section  { padding: 88px 28px 28px; }
 }
 
-/* ─── LANDSCAPE MÓVEL — oculta soulzinho pra não cobrir conteúdo */
 @media (max-height: 500px) and (orientation: landscape) {
   .soulzinho-fixed { display: none; }
   .story-ui { bottom: 2vh; top: auto; left: 16px; right: 16px; width: auto; }
   .hero-content { bottom: 24px; }
 }
 
-/* ─── TABLET RETRATO (769–1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
   .hero-content  { max-width: 70%; }
   .soulzinho-fixed { width: clamp(160px, 24vw, 280px); right: 4vw; }
@@ -605,7 +626,6 @@ body.in-white-section .soulzinho-fixed {
   .next-section { padding: 100px 36px 36px; }
 }
 
-/* ─── DESKTOP GRANDE (>1400px) */
 @media (min-width: 1400px) {
   .hero-content  { left: 80px; bottom: 80px; }
   .hero-nav      { left: 80px; top: 56px; }
@@ -614,17 +634,12 @@ body.in-white-section .soulzinho-fixed {
   .swiss-stat-num { font-size: clamp(72px, 7vw, 120px); }
 }
 
-/* ─── will-change: apenas onde há animação ativa ─────────────────── */
-/* Removemos will-change do sections-track (era premature opt.) */
-.sections-track  { will-change: transform; } /* só transform, não opacity */
+.sections-track  { will-change: transform; }
 .cursor-glass    { will-change: transform; }
 .warp-overlay    { will-change: opacity; }
-/* Soulzinho: só quando visível */
 .soulzinho-fixed.is-visible { will-change: transform; }
 
-/* ─── prefers-reduced-motion: cobertura total ────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  /* Para toda animação/transição exceto opacidade */
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -632,34 +647,25 @@ body.in-white-section .soulzinho-fixed {
     scroll-behavior: auto !important;
   }
 
-  /* Permite fade-in puro (opacidade) — não causa motion sickness */
   .story-ui, #site, #loader { transition-duration: 0.4s !important; }
 
-  /* WebGL / parallax: canvas fica estático (HeroShader já trata no TS) */
   canvas#shaderBg { opacity: 0.4; }
 
-  /* Desativa soulzinho float */
   .marker-soulzinho, .soulzinho-fixed { animation: none !important; }
 
-  /* Desativa filtro ripple/water */
   #nextSection .swiss-body *:hover { filter: none !important; }
   .story-panel.is-negative-active   { filter: none !important; }
 
-  /* Grain canvas: oculto (Loader.tsx já não desenha em reduced) */
   #noiseCanvas { display: none; }
 
-  /* Scroll-jacking: scroll indicator sem pulsar */
   .scroll-indicator.is-visible { animation: none !important; opacity: 0.4; }
 
-  /* Cursor glass: desativa */
   .cursor-glass { display: none !important; }
 
-  /* Seções track: sem transformações pesadas */
   .sections-track { will-change: auto; }
   .warp-overlay   { will-change: auto; }
 }
 
-/* ─── TOUCH: remove hover states que travam em iOS ──────────────── */
 @media (hover: none) {
   .enter-gate:hover { transform: translate(-50%,-50%) !important; }
   .sound-toggle:hover { transform: none !important; }
@@ -668,10 +674,8 @@ body.in-white-section .soulzinho-fixed {
   .cursor-glass { display: none !important; }
 }
 
-/* ─── Scrollbar: seções internas (não-WebKit já usa scrollbar-width:none) */
 .next-section::-webkit-scrollbar { display: none; }
 
-/* ─── Focus visible: acessibilidade de teclado ──────────────────── */
 .enter-gate:focus-visible {
   outline: 2px solid rgba(255,255,255,0.6);
   outline-offset: 8px;
@@ -682,7 +686,6 @@ body.in-white-section .soulzinho-fixed {
   outline-offset: 3px;
 }
 
-/* ─── Video frame: mobile menor */
 @media (max-width: 480px) {
   .video-frame {
     width: min(88vmin, 320px);

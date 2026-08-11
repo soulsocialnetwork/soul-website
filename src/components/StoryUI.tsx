@@ -178,27 +178,43 @@ export default function StoryUI() {
     }
   }, [isActive, isTyping, finishTyping, currentKey, endStoryMode, showBeat]);
 
+  const showBeatRef = useRef(showBeat);
+  showBeatRef.current = showBeat;
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
+
   useEffect(() => {
-    (window as any).__startStoryMode = (key: string, sectionIndex: number) => {
-      if (isActive || finishedKeys.current[key]) return;
+    (window as any).__resetStoryLoop = () => {
+      finishedKeys.current = {};
+      setIsActive(false);
+      setCurrentKey('');
+      document.querySelectorAll('.story-reveal.is-revealed').forEach(el => {
+        el.classList.remove('is-revealed');
+      });
+    };
+
+    (window as any).__startStoryMode = (key: string, sectionIndex: number): boolean => {
+      if (isActiveRef.current || finishedKeys.current[key]) return false;
       const beats = STORY_BEATS[key];
-      if (!beats?.length) return;
-      
+      if (!beats?.length) return false;
+
       setIsActive(true);
       setCurrentKey(key);
       currentBeatIndex.current = 0;
       setIsNegative(false);
-      
+
       if ((window as any).__lockScroll) (window as any).__lockScroll(sectionIndex);
       document.getElementById('scrollIndicator')?.classList.remove('is-visible');
-      
-      showBeat(key, 0);
+
+      showBeatRef.current(key, 0);
+      return true;
     };
 
     return () => {
       delete (window as any).__startStoryMode;
+      delete (window as any).__resetStoryLoop;
     };
-  }, [isActive, showBeat]);
+  }, []);
 
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
@@ -239,7 +255,6 @@ export default function StoryUI() {
   return (
     <div className={`story-ui ${isActive ? 'is-active' : ''}`} id="storyUI">
       <div className={`story-panel ${isNegative ? 'is-negative-active' : ''}`} onClick={handlePanelClick}>
-        {/* Avatarzinho flutuante ativado dinamicamente no mobile via CSS */}
         <div className="story-avatar" aria-hidden="true">
           <video
             autoPlay

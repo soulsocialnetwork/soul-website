@@ -1,16 +1,7 @@
-/**
- * ScrollEngine.tsx — Motor de scroll-jacking numérico com loop infinito destravado.
- *
- * Hero e fase de retorno: scroll livre bidirecional com transição Starship.
- * Seções brancas: scroll com progresso controlado por seção.
- *
- * client:load
- */
 'use client';
 
 import { useEffect } from 'react';
 
-/* ─── Constantes ────────────────────────────────────────────────── */
 const HERO_SPAN      = 2.2;
 const RETURN_SPAN    = 2.2;
 const MAX_SHIFT      = 6;
@@ -29,9 +20,6 @@ function smoothstep(min: number, max: number, value: number) {
   return x * x * (3 - 2 * x);
 }
 
-/**
- * Limita delta de shift nas seções brancas para evitar saltos indesejados entre páginas.
- */
 function clampShiftDelta(shift: number, deltaShift: number): number {
   let newShift = shift + deltaShift;
   newShift = Math.max(0, Math.min(MAX_SHIFT, newShift));
@@ -59,36 +47,38 @@ function applyScrollDelta(
   currentProgress: number,
   delta: number,
 ): number {
-  // 1. Zona de Seções Brancas
   if (isInWhiteSections(currentProgress)) {
     const shift = currentProgress - HERO_SPAN;
 
-    // Se está na 1ª seção e tenta rolar para TRÁS -> Volta pra Hero
     if (delta < 0 && shift <= SHIFT_EPS) {
       return Math.max(0, currentProgress + delta);
     }
 
-    // CORREÇÃO AQUI: Se está na ÚLTIMA seção e tenta rolar para FRENTE -> Libera o retorno pra Hero!
-    if (delta > 0 && shift >= MAX_SHIFT - SHIFT_EPS) {
-      return currentProgress + delta;
-    }
-
-    // Navegação travada por degrau dentro das seções 0..6
     const newShift = clampShiftDelta(shift, delta);
     return HERO_SPAN + newShift;
   }
 
-  // 2. Zona da Hero (0..2.2) ou Zona de Retorno (8.2..10.4)
   let nextProgress = currentProgress + delta;
 
-  // Loop contínuo sem travas (Forward / Backward)
   if (nextProgress > TOTAL_PROGRESS) {
-    nextProgress = nextProgress - TOTAL_PROGRESS;
+    if (currentProgress >= TOTAL_PROGRESS - SHIFT_EPS && delta > 0) {
+      return 0;
+    }
+    nextProgress = TOTAL_PROGRESS;
   } else if (nextProgress < 0) {
-    nextProgress = TOTAL_PROGRESS + nextProgress;
+    // hero: trava em 0 ao rolar pra trás (sem teleporte)
+    if (currentProgress <= HERO_SPAN) {
+      nextProgress = 0;
+    } else {
+      nextProgress = TOTAL_PROGRESS + nextProgress;
+    }
   }
 
   return nextProgress;
+}
+
+function shiftToSectionIndex(shift: number): number {
+  return Math.max(0, Math.min(SECTION_IDS.length - 1, Math.floor(shift + 1e-9)));
 }
 
 export default function ScrollEngine() {
@@ -126,6 +116,22 @@ export default function ScrollEngine() {
     let currentFilteredIndex = -1;
     const sectionEls = SECTION_IDS.map(id => document.getElementById(id));
 
+    function snapLoopToHero() {
+      targetProgress = 0;
+      smoothProgress = 0;
+      for (const key of Object.keys(finishedKeys)) delete finishedKeys[key];
+      (window as any).__resetStoryLoop?.();
+      applyProgress(0);
+    }
+
+    function applyScrollTarget(delta: number) {
+      const prev = targetProgress;
+      targetProgress = applyScrollDelta(targetProgress, delta);
+      if (targetProgress === 0 && prev >= TOTAL_PROGRESS - SHIFT_EPS) {
+        snapLoopToHero();
+      }
+    }
+
     function setActiveFilteredSection(index: number) {
       if (index === currentFilteredIndex) return;
       const prevEl = sectionEls[currentFilteredIndex];
@@ -149,18 +155,15 @@ export default function ScrollEngine() {
       let tunnelP: number, trackOpacity: number, shift: number;
 
       if (p <= HERO_SPAN) {
-        // Entrada (Hero -> Seções)
         const rawP   = Math.max(0, Math.min(1, p / HERO_SPAN));
         tunnelP      = rawP;
         trackOpacity = smoothstep(0.55, 0.95, rawP);
         shift        = 0;
       } else if (p <= SECTIONS_END) {
-        // Trilha de seções brancas (0..6)
         tunnelP      = 1;
         trackOpacity = 1;
         shift        = Math.min(p - HERO_SPAN, MAX_SHIFT);
       } else {
-        // Saída (Seções -> Hero)
         const retRaw = Math.min(Math.max((p - SECTIONS_END) / RETURN_SPAN, 0), 1);
         tunnelP      = 1 - retRaw;
         trackOpacity = smoothstep(0.55, 0.95, 1 - retRaw);
@@ -179,7 +182,7 @@ export default function ScrollEngine() {
       const isWhiteSection = true;
 
       if (trackOpacity > 0.05) {
-        const idx = Math.max(0, Math.min(SECTION_IDS.length - 1, Math.round(shift)));
+        const idx = shiftToSectionIndex(shift);
         setActiveFilteredSection(idx);
       } else {
         setActiveFilteredSection(-1);
@@ -195,18 +198,13 @@ export default function ScrollEngine() {
         document.body.classList.remove('in-white-section');
       }
 
-      if (trackOpacity > 0.5 && (window as any).__updateSoulState) {
-        (window as any).__updateSoulState(shift);
-      }
-
       if (trackOpacity > 0.5 && !isStoryActive) {
+        const activeIdx = shiftToSectionIndex(shift);
         for (let idx = 0; idx < STORY_ORDER.length; idx++) {
           const key = STORY_ORDER[idx];
-          if (!finishedKeys[key] && Math.abs(shift - idx) < 0.5) {
-            finishedKeys[key] = true;
-            if ((window as any).__startStoryMode) {
-              (window as any).__startStoryMode(key, idx);
-            }
+          if (!finishedKeys[key] && idx === activeIdx) {
+            const started = (window as any).__startStoryMode?.(key, idx);
+            if (started !== false) finishedKeys[key] = true;
             break;
           }
         }
@@ -222,23 +220,30 @@ export default function ScrollEngine() {
     }
 
     const onWheel = (e: WheelEvent) => {
+      if (isStoryActive) {
+        e.preventDefault();
+        return;
+      }
+
       e.preventDefault();
-      if (isStoryActive) return;
       if (e.deltaY === 0) return;
       const delta = e.deltaY * WHEEL_K;
-      targetProgress = applyScrollDelta(targetProgress, delta);
+      applyScrollTarget(delta);
     };
 
     let touchStartY = 0;
     const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
     const onTouchMove  = (e: TouchEvent) => {
+      if (isStoryActive) {
+        e.preventDefault();
+        return;
+      }
+
       e.preventDefault();
-      if (isStoryActive) return;
       const delta = touchStartY - e.touches[0].clientY;
       touchStartY = e.touches[0].clientY;
       if (delta === 0) return;
-      const progressDelta = delta * TOUCH_K;
-      targetProgress = applyScrollDelta(targetProgress, progressDelta);
+      applyScrollTarget(delta * TOUCH_K);
     };
 
     window.addEventListener('wheel',      onWheel,      { passive: false } as any);
@@ -247,13 +252,15 @@ export default function ScrollEngine() {
 
     let rafId = 0;
     function render() {
-      // Quando termina a animação de retorno no ponto 10.4, reseta de forma transparente para a Hero (0)
-      if (smoothProgress >= TOTAL_PROGRESS - 0.005 && targetProgress >= TOTAL_PROGRESS - 0.005) {
-        targetProgress = 0;
+      targetProgress = Math.min(Math.max(targetProgress, 0), TOTAL_PROGRESS);
+
+      // loop completo: evita deslizar 7→1 enquanto smooth alcança o hero
+      if (targetProgress <= SHIFT_EPS && smoothProgress >= SECTIONS_END) {
         smoothProgress = 0;
       }
 
       smoothProgress += (targetProgress - smoothProgress) * LERP;
+      smoothProgress = Math.min(Math.max(smoothProgress, 0), TOTAL_PROGRESS);
       applyProgress(smoothProgress);
       rafId = requestAnimationFrame(render);
     }

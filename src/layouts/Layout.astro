@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title = 'soul.',
-  description = 'Uma rede social projetada para devolver a sua atenção. Menos algoritmo, mais humano.',
+  description = 'A primeira rede social feita para ser saudável de verdade.',
 } = Astro.props;
 ---
 
@@ -16,27 +16,21 @@ const {
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <!-- viewport-fit=cover for notch/safe-area; interactive-widgets omitted (unsupported in Chrome → console noise) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content="index, follow" />
-    <!-- Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/video-intro-poster.jpg" />
-    <!-- Mobile chrome color -->
     <meta name="theme-color" content="#0a0a0c" />
-    <!-- PWA / standalone -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Favicon -->
     <link rel="icon" href="/soulzinho-logo.svg" type="image/svg+xml" />
 
-    <!-- Preload critical assets -->
     <link rel="preload" href="/logo.svg" as="image" type="image/svg+xml" />
     <link rel="preload" href="/video-intro-poster.jpg" as="image" fetchpriority="high" />
   </head>

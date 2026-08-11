@@ -1,8 +1,3 @@
-/**
- * HeroShader — WebGL puro, portado 1:1 do index.html original.
- * client:only="react"  →  nunca executa no servidor Astro.
- */
-
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
 const VERT_SRC = `
@@ -188,7 +183,7 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let cw = 0, ch = 0;
 
-    /** Fallback para mobile: usa viewport quando canvas ainda não tem layout. */
+    // mobile: usa viewport se canvas ainda sem layout
     const resize = () => {
       if (!canvas || !gl || isContextLost) return;
 
@@ -341,7 +336,7 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('resize', resize);
 
-    /* Re-dimensiona quando o site aparece após o loader */
+    // redimensiona quando site aparece após loader
     const siteEl = document.getElementById('site');
     const onSiteVisible = () => requestAnimationFrame(resize);
     siteEl?.addEventListener('transitionend', onSiteVisible);

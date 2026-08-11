@@ -1,171 +1,181 @@
 ---
-// SectionsTrack.astro — HTML estático das 7 seções migrado para React
 import SwissSection from './SwissSection';
 import StatBlock from './StatBlock';
-import ConceptGrid from './ConceptGrid';
 ---
 <div class="sections-track" id="sectionsTrack">
-  
+
   <SwissSection id="nextSection" canvasId="nextStarfield">
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">01</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">O reflexo</p>
     <StatBlock revealKey="stats" stats={[
       { target: '553', format: 'hm', startLabel: '9h13', label: 'por dia conectados à internet' },
       { target: '217', format: 'hm', startLabel: '3h37', label: 'só em redes sociais, todo dia' }
     ]} />
-    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-      Você já abriu o celular só para ver "uma coisa rapidinho" e saiu de lá quarenta minutos depois, sem saber bem
-      o que viu, nem por que ainda estava lá? Isso é tão comum que a gente parou de estranhar. Mas os números
-      mostram o tamanho real disso: o Brasil está entre os países com maior tempo médio diário conectado à internet
-      do mundo, e parte relevante desse tempo resulta de decisões de design: feed algorítmico, notificações push e
-      rolagem infinita são desenvolvidos para maximizar o tempo de permanência do usuário na plataforma.
-    </p>
-    <p class="swiss-source story-reveal" data-story-reveal="context">
-      fonte: Digital 2024: Brazil, We Are Social & Meltwater · conceito de design persuasivo: Tristan Harris,
-      ex-design ethicist do Google, "How Technology Hijacks People's Minds" (2016)
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      Você acorda e, antes mesmo de sentir o peso do próprio corpo, sua mão já procura o celular. Não houve escolha,
+      apenas um reflexo aprendido. Na palma da sua mão, uma pequena máquina caça-níqueis: você desliza a tela, algo
+      aparece e, por um instante, o vazio diminui. Não é prazer, é a promessa dele. No Brasil, passamos em média 9
+      horas e 13 minutos por dia conectados, sendo 3 horas e 37 minutos só em redes sociais, todos os dias,
+      entregando nossa atenção a sistemas que aprenderam a prever o que sentimos, pensamos e queremos. Mas e se a
+      tecnologia pudesse fazer o contrário?
     </p>
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se uma rede social fosse feita para te devolver o seu tempo, em vez de tomar ele de você?
+      E se, pela primeira vez, seu celular não quisesse prender você, mas ajudar você a viver?
     </p>
   </SwissSection>
 
   <SwissSection id="nextSection2" canvasId="nextStarfield2">
-    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">
-      não é falta de força de vontade.<br>é design feito pra te prender.
-    </h2>
-    <p class="swiss-paragraph story-reveal" data-story-reveal="mechanism">
-      Em 1930, Skinner descobriu que recompensa imprevisível vicia mais do que recompensa certa.
-      É exatamente isso que acontece quando você desliza o dedo: às vezes tem algo bom, às vezes não.
-      Você não consegue parar porque seu cérebro está esperando a próxima surpresa.
-      A alavanca é o seu polegar. A máquina caça-níquel é o seu celular.
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">02</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">O mecanismo</p>
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      Enquanto você busca conexão, equipes inteiras de designers e engenheiros trabalham para decidir o que você
+      verá ao acordar. Eles transformam nossa necessidade humana de pertencer em combustível para um sistema de
+      curtidas, corações e notificações que promete conexão, mas muitas vezes nos deixa mais vazios.
     </p>
-    <ConceptGrid revealKey="concepts" concepts={[
-      { title: 'paginação', text: 'o conteúdo tem fim definido, em vez de rolagem infinita, um dos mecanismos mais associados ao uso compulsivo de redes sociais.' },
-      { title: 'tela de intenção', text: 'separa o que o usuário deseja fazer do que a plataforma prioriza mostrar.' },
-      { title: 'ferramenta, não mestre', text: 'sem notificações desenhadas para gerar retorno automático ao aplicativo.' },
-      { title: 'foco protegido', text: 'sem mecanismos de recompensa variável, o mesmo princípio usado em caça-níqueis.' }
-    ]} />
-    <p class="swiss-source story-reveal" data-story-reveal="source">
-      base conceitual: B. F. Skinner, reforço de razão variável (1930); Harris (2016), "FOMSI"
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context2">
+      Chamamos isso de conectar o mundo, mas o resultado pode ser uma geração cada vez mais presa ao excesso de
+      estímulos, ao chamado Brain Rot, incapaz de permanecer em silêncio sem sentir que está perdendo alguma coisa.
+      São bilhões de pessoas vivendo dentro de feeds personalizados, cada um construído para prender seus olhos
+      por mais alguns segundos. E talvez essa seja a parte mais assustadora: estamos ensinando uma geração a
+      confundir conexão com presença, popularidade com pertencimento e atenção com valor.
     </p>
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se a tecnologia devolvesse o controle ao usuário?
+      E se a tecnologia pudesse fazer o contrário? E se, em vez de capturar sua atenção, ela ajudasse você a
+      recuperá-la?
     </p>
   </SwissSection>
 
   <SwissSection id="nextSection3" canvasId="nextStarfield3">
-    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">estímulo em alta velocidade, atenção em queda.</h2>
-    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-      Em 2024, um termo virou palavra do ano em vários dicionários: Brain Rot, o desgaste cognitivo do consumo
-      excessivo de conteúdo curto e rápido, associado a menor concentração, memória mais fraca e menos tolerância
-      para tarefas longas. O córtex pré-frontal, região ligada a foco e autocontrole, é a mais afetada por esse
-      padrão de estímulo constante. Pesquisadores descrevem um padrão em duas fases: no início, o uso é por prazer;
-      com o tempo, ele passa a ser fuga. Da ansiedade, do tédio, da solidão.
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">03</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">O manifesto</p>
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      O Soul. nasce de uma pergunta simples, mas incômoda: e se existisse outro jeito? Nós não queremos o seu
+      tempo. Queremos devolvê-lo. Não somos um mestre dizendo para onde você deve ir, somos uma bicicleta para a
+      sua mente, uma ferramenta que espera pelo seu comando em vez de seduzi-lo para um buraco sem fim.
     </p>
-    <p class="swiss-source story-reveal" data-story-reveal="context">
-      fonte: "Brain Rot", termo do ano (2024); dupla via de reforço, Jingsong Wang e Shen Wang; Harris (2016)
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context2">
+      No Soul., o conteúdo tem fim. A paginação substitui o scroll infinito porque respeitamos o momento em que
+      você decide parar. Aqui, não perguntamos "o que você quer consumir?", mas "o que você precisa agora?". Chega
+      de tigelas sem fundo que nunca dizem "basta". Chega de autoplay decidindo o que vem depois. Chega de
+      métricas de vaidade transformando seu valor em números. No Soul., a tecnologia não tenta prender você. Ela
+      existe para que você possa ir embora.
     </p>
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se publicar exigisse uma pausa, em vez de um impulso?
+      E se, finalmente, a tecnologia existisse para você ir embora — e não para te prender?
     </p>
-    <ConceptGrid revealKey="concept" singleColumn={true} concepts={[
-      { title: 'qual a intenção desta publicação?', text: 'antes de postar, o soul pergunta. um segundo de pausa tira o cérebro do piloto automático.' }
-    ]} />
   </SwissSection>
 
   <SwissSection id="nextSection4" canvasId="nextStarfield4">
-    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">o vídeo espera por você. não o contrário.</h2>
-    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-      Um estudo com mais de 7.600 adolescentes mostrou que não é o tempo conectado que machuca.
-      É como esse tempo é usado. Criar e interagir traz bem-estar. Rolar o feed e se comparar traz ansiedade.
-      A diferença entre usar e ser usado cabe numa decisão simples: quem aperta o play?
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">04</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">O autoplay</p>
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      Você já entrou naquele estado em que um vídeo termina e outro começa antes mesmo de você perceber? Dez
+      vídeos. Vinte. Talvez mais. E, quando finalmente levanta os olhos, não consegue lembrar exatamente o que
+      assistiu. O autoplay transformou o ato de escolher em um reflexo. Você não decidiu assistir ao próximo
+      vídeo. Ele simplesmente começou. No Soul., fazemos o contrário.
     </p>
-    <p class="swiss-source story-reveal" data-story-reveal="context">
-      fonte: HBSC / Organização Mundial da Saúde (2023), 7.643 adolescentes
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context2">
+      O Soults não possui autoplay: nada começa sem que você escolha. A duração de 15 segundos está visível antes
+      do play, porque seu tempo pertence a você e você merece saber quanto dele está entregando. As miniaturas são
+      honestas, sem promessas fabricadas para arrancar um clique. Parece pequeno, mas não é. É a diferença entre
+      uma tecnologia que conduz seu comportamento e uma tecnologia que respeita sua decisão. O Soul não tenta
+      descobrir como fazer você assistir a mais um vídeo. Ele espera. Como uma bicicleta encostada na parede,
+      pronta para levá-lo a algum lugar, mas incapaz de partir sem que você escolha pedalar. Você decide quando
+      começa. Você decide quando termina. Você decide.
     </p>
-    <ConceptGrid revealKey="concepts" concepts={[
-      { title: 'play manual', text: 'sem autoplay conduzindo automaticamente ao próximo vídeo.' },
-      { title: 'miniatura honesta', text: 'o conteúdo é identificável antes de o usuário decidir assistir.' },
-      { title: 'duração visível', text: 'tempo de reprodução exibido previamente, sem estimativa oculta.' },
-      { title: 'soults', text: 'o formato curto é mantido, mas a decisão de assistir permanece do usuário.' }
-    ]} />
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se o conteúdo esperasse a decisão do usuário, em vez de antecipá-la?
+      E se a tecnologia pudesse, pela primeira vez, aprender a esperar por você?
     </p>
   </SwissSection>
 
   <SwissSection id="nextSection5" canvasId="nextStarfield5">
-    <StatBlock revealKey="stats" singleColumn={true} stats={[
-      { target: '6', format: 'suffix', suffix: 'x', startLabel: '6x', label: 'mais rápido informações falsas se espalham do que informações verdadeiras nas redes sociais' }
-    ]} />
-    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-      Quando cada pessoa vê um feed diferente, moldado por critérios de engajamento, forma-se uma fragmentação da
-      experiência informacional: bolhas que dificultam um ponto de referência comum entre os usuários. O que é
-      falso costuma ser mais novo, mais chocante, mais emocional, e o algoritmo que decide o que você vê tende a
-      priorizar isso. Em 2025, quase metade dos adolescentes americanos (48%) já diz achar que redes sociais fazem
-      mal para pessoas da idade deles, um salto em relação aos 32% registrados em 2022.
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">05</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">A mentira</p>
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      Uma mentira pode atravessar o mundo antes que a verdade consiga terminar de calçar os sapatos. Um estudo do
+      MIT mostrou que notícias falsas se espalham significativamente mais rápido do que as verdadeiras. E talvez o
+      mais assustador seja entender por quê: a mentira não precisa ser verdadeira para funcionar. Ela só precisa
+      provocar medo, raiva, indignação ou choque. Precisa fazer você clicar, compartilhar e continuar olhando.
     </p>
-    <p class="swiss-source story-reveal" data-story-reveal="context">
-      fonte: Vosoughi, Roy & Aral, "The Spread of True and False News Online", Science (2018) · Pew Research Center (2025)
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context2">
+      No Brasil, durante a pandemia, vimos boatos sobre curas milagrosas, tratamentos sem comprovação e teorias
+      conspiratórias ultrapassarem a tela e influenciarem decisões que afetavam vidas reais. Em Myanmar, a
+      propagação de discursos de ódio no Facebook foi associada à violência contra a população Rohingya. A tela
+      termina. A consequência não. Uma mentira compartilhada pode destruir reputações, separar famílias, alimentar
+      ódio e transformar pixels em sofrimento real.
     </p>
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se a linha do tempo voltasse a ser a mesma para todos?
+      E se uma rede social pudesse parar de perguntar "isso vai prender sua atenção?" e começar a perguntar "isso
+      merece a sua confiança?"
     </p>
-    <ConceptGrid revealKey="concept" singleColumn={true} concepts={[
-      { title: 'feed 100% cronológico', text: 'a ordem de exibição não é definida por um algoritmo de recomendação, mas pela sequência temporal das publicações, um modelo comparável ao adotado pela Wikipédia.' }
-    ]} />
   </SwissSection>
 
   <SwissSection id="nextSection6" canvasId="nextStarfield6">
-    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">quando é grátis, você costuma ser o produto.</h2>
-    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-      Quanto mais tempo você passa na plataforma, mais ela aprende sobre você.
-      Esse aprendizado vira propaganda. Essa propaganda vira receita.
-      Shoshana Zuboff chama isso de capitalismo de vigilância: seu comportamento como matéria-prima.
-      Não é teoria de conspiração. É o modelo de negócio.
+    <p class="swiss-eyebrow story-reveal" data-story-reveal="chapter">06</p>
+    <p class="swiss-title story-reveal" data-story-reveal="chapter">A vigilância</p>
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context">
+      Você já sentiu aquele arrepio ao ver um anúncio sobre algo que acabou de procurar? Parece coincidência, mas
+      existe uma indústria inteira construída sobre observar, registrar e prever seu comportamento. Shoshana
+      Zuboff chamou isso de Capitalismo de Vigilância: transformar experiências humanas em dados e dados em
+      previsões sobre o que faremos a seguir. Cada clique deixa uma pista, cada pausa ensina alguma coisa e cada
+      segundo diante da tela alimenta modelos que tentam descobrir o que prende você, o que desperta seu desejo e
+      o que faz você permanecer. Quanto mais a máquina aprende sobre você, mais valioso você se torna para quem
+      compra essas previsões. No mercado dos futuros humanos, você não é apenas o usuário. Você é o inventário.
     </p>
-    <ConceptGrid revealKey="concepts" concepts={[
-      { title: 'sem login social', text: 'o cadastro via Google ou Facebook vincula o uso da plataforma a dados já coletados por terceiros. o cadastro é feito de forma independente.' },
-      { title: 'sem perfil comportamental comercializável', text: 'não há construção de perfil de comportamento destinado à venda para anunciantes.' },
-      { title: 'sem rastreamento silencioso', text: 'a navegação do usuário não é convertida em dado sem seu conhecimento.' },
-      { title: 'dado do usuário, controle do usuário', text: 'o que é compartilhado, e com quem, é uma decisão do usuário.' }
-    ]} />
+    <p class="swiss-paragraph-body story-reveal" data-story-reveal="context2">
+      O Soul. nasce para quebrar essa lógica. Não queremos transformar suas fragilidades em produto, construir um
+      perfil psicológico para mantê-lo preso ou transformar sua vida em matéria-prima para anúncios. Aqui,
+      privacidade não é uma promessa escondida em letras pequenas, é parte da arquitetura. Seus dados não são
+      nosso inventário. Sua confiança é.
+    </p>
     <p class="swiss-question story-reveal" data-story-reveal="question">
-      e se a privacidade fosse padrão, não uma opção paga?
+      E se a tecnologia pudesse existir sem precisar possuir você?
     </p>
   </SwissSection>
 
   <SwissSection id="nextSection7" canvasId="nextStarfield7" isFooter={true}>
     <div class="swiss-footer-top">
-      <h2 class="swiss-headline story-reveal" data-story-reveal="headline">métricas de popularidade não equivalem a conexão real.</h2>
-      <p class="swiss-paragraph story-reveal" data-story-reveal="context">
-        Contagem de curtidas, número de seguidores e visualizações têm sido associadas, em estudos de bem-estar
-        digital, ao uso dessas métricas como parâmetro de autoestima, particularmente entre usuários mais jovens,
-        com impacto relatado sobre ansiedade e autoimagem.
+      <p class="swiss-eyebrow">07</p>
+      <p class="swiss-paragraph-body">
+        Agora, olhe para a tela e pense na vida que existe fora dela. Pense nos seus amigos, nas risadas que ainda
+        vão dar, nas conversas que atravessam a madrugada, na sua família, nos abraços que ainda pode dar e no amor
+        que ainda pode encontrar. Pense no cachorro que corre para te receber, no cheiro da chuva, no sol entrando
+        pela janela, no café de manhã, numa música que toca no momento certo e em todas as pessoas que ainda podem
+        entrar na sua história. Pense também no tempo, porque ele não para. Seus pais estão envelhecendo. Seus
+        amigos estão mudando. Você está mudando. Um dia, sem perceber, você vai abraçar alguém pela última vez,
+        ouvir uma voz pela última vez, rir com alguém pela última vez. É isso que torna a vida tão brutalmente
+        bonita: <strong>ela acaba</strong>. E justamente por acabar, cada segundo importa.
       </p>
-      <p class="swiss-question story-reveal" data-story-reveal="question">
-        e se o indicador relevante fosse outro?
+      <p class="swiss-paragraph-body">
+        Enquanto você procura a próxima coisa para assistir, a vida continua acontecendo. Crianças estão crescendo,
+        animais estão envelhecendo, pessoas estão se apaixonando, alguém está dando seu primeiro beijo enquanto
+        alguém dá o último. Ainda há tempo para ligar, abraçar, pedir desculpas, dizer “eu te amo”, sair sem
+        destino, rir até doer, olhar o céu e viver uma história que não precisa de curtidas para ter significado.
+        Porque, quando a tela finalmente apagar pela última vez, não serão as notificações que você vai querer de
+        volta. Serão as pessoas, os lugares, as risadas, os abraços e aquelas pequenas manhãs que pareciam comuns.
+        <strong>A vida inteira estava escondida nesses pequenos momentos enquanto você procurava alguma coisa na
+        tela. Então coloque o celular sobre a mesa. Levante os olhos. Você está aqui. E, por enquanto, isso ainda
+        é tempo.</strong>
       </p>
-      <ConceptGrid revealKey="concepts" concepts={[
-        { title: 'amigos reais', text: 'o perfil evidencia conexões próximas, não a quantidade de interações públicas recebidas.' },
-        { title: 'pausas intencionais', text: 'a bio permite indicar períodos de ausência proposital: reconectar com a vida offline também faz parte da proposta.' }
-      ]} />
     </div>
-    <div class="swiss-footer-bottom story-reveal" data-story-reveal="footer">
-      <p class="swiss-paragraph swiss-footer-manifest">
-        O jeito como a gente usa redes sociais hoje não é normal. A gente só se acostumou tanto com isso, que parou
-        de perceber. O soul não promete resolver tudo isso sozinho. Mas promete uma coisa: nunca vai lucrar em cima
-        do seu tempo perdido.
-      </p>
-      <p class="swiss-footer-slogan">soul. menos algoritmo, mais humano.</p>
-      <p class="swiss-footer-credits">
-        projeto desenvolvido por Brendo Reis e equipe no Curso Técnico de Sistemas, SENAI Anchieta, 2026.
-      </p>
+    <div class="swiss-footer-bottom">
+      <p class="swiss-footer-slogan">Soul. Menos algoritmo. Mais humano.</p>
+      <blockquote class="swiss-footer-manifest">
+        "E por isso, quero deixar um agradecimento a quem caminha comigo nesse projeto: Eduardo dos
+        Santos, Erika Akahoshi, Evilyn Aparecida e Felipe Thomaz.  Isso vai muito além de código, sistemas e telas,
+        isso tem alma, tem amizade. O Soul ainda está sendo construído, 
+        porque o caminho que estamos trilhando juntos importa tanto quanto o destino: as ideias que discutimos, os
+        erros que corrigimos, as risadas no meio do processo. Essa história ainda está sendo escrita. E é
+        exatamente isso que faz valer a pena."
+      </blockquote>
+      <p class="swiss-footer-credits">— Brendo Reis</p>
     </div>
   </SwissSection>
 
 </div>
 
 <script>
-  /* Starfields — lazy init via IntersectionObserver (só quando a seção entra no viewport) */
+  // starfields sob demanda via intersectionobserver
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     let globalMouseX = -9999;
     let globalMouseY = -9999;
