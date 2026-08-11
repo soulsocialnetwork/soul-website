@@ -213,7 +213,8 @@ export default function ScrollEngine() {
       }
 
       if ((window as any).__shaderSetProgress) (window as any).__shaderSetProgress(tunnelP);
-      if ((window as any).updateWormholeAudio) {
+      const siteReady = document.getElementById('site')?.classList.contains('is-visible');
+      if (siteReady && (window as any).updateWormholeAudio) {
         (window as any).updateWormholeAudio(tunnelP, (performance.now() - startTimeRef) / 1000);
       }
 

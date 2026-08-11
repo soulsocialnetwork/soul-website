@@ -14,26 +14,32 @@ export default function AudioEngine() {
   useEffect(() => {
     let isMuted = false;
     let wasInTunnel = false;
+    /** Só true após clique/toque/tecla — bloqueia AudioContext antes disso. */
+    let gestureUnlocked = false;
 
-    /** Cria/resume o AudioContext — seguro após gesto do usuário. */
-    function ensureUnlocked(): AudioContext {
+    function ensureUnlocked(): AudioContext | null {
+      if (!gestureUnlocked) return null;
       if (!ctxRef.current) {
         ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         bgMusicRef.current?.load();
         shuaAudioRef.current?.load();
       }
-      if (ctxRef.current.state === 'suspended') ctxRef.current.resume();
+      if (ctxRef.current.state === 'suspended') {
+        ctxRef.current.resume().catch(() => {});
+      }
       return ctxRef.current;
     }
 
-    /** Retorna ctx só se já desbloqueado (ex.: hover antes de qualquer clique). */
     function getAudioCtxIfReady(): AudioContext | null {
-      if (!ctxRef.current) return null;
-      if (ctxRef.current.state === 'suspended') ctxRef.current.resume();
+      if (!gestureUnlocked || !ctxRef.current) return null;
+      if (ctxRef.current.state === 'suspended') {
+        ctxRef.current.resume().catch(() => {});
+      }
       return ctxRef.current;
     }
 
     const onFirstInteraction = () => {
+      gestureUnlocked = true;
       ensureUnlocked();
       document.removeEventListener('click', onFirstInteraction, true);
       document.removeEventListener('touchstart', onFirstInteraction, true);
@@ -52,8 +58,7 @@ export default function AudioEngine() {
     };
     (window as any).__getIsMuted = () => isMuted;
 
-    function initAudioNodes() {
-      const ctx = ensureUnlocked();
+    function initAudioNodes(ctx: AudioContext) {
       if (!bgFilterRef.current && bgMusicRef.current) {
         try {
           const src = ctx.createMediaElementSource(bgMusicRef.current);
@@ -76,8 +81,9 @@ export default function AudioEngine() {
 
     function playWindBurst() {
       if (isMuted) return;
+      const ctx = ensureUnlocked();
+      if (!ctx) return;
       try {
-        const ctx      = ensureUnlocked();
         const duration = 2.0;
         const frames   = Math.ceil(ctx.sampleRate * duration);
         const buffer   = ctx.createBuffer(1, frames, ctx.sampleRate);
@@ -127,9 +133,12 @@ export default function AudioEngine() {
     };
 
     (window as any).updateWormholeAudio = (progress: number, elapsed: number) => {
+      // ScrollEngine chama isso a ~60fps desde o mount — sair cedo se ainda não houve gesto.
+      if (!gestureUnlocked) return;
       if (!bgMusicRef.current || !shuaAudioRef.current) return;
       const ctx = ensureUnlocked();
-      initAudioNodes();
+      if (!ctx) return;
+      initAudioNodes(ctx);
 
       const inTunnel = progress > 0.02 && progress < 0.98;
 
@@ -179,8 +188,9 @@ export default function AudioEngine() {
 
     const playClickSound = () => {
       if (isMuted) return;
+      const ctx = ensureUnlocked();
+      if (!ctx) return;
       try {
-        const ctx = ensureUnlocked();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -212,8 +222,9 @@ export default function AudioEngine() {
 
     (window as any).__playLogoPlin = () => {
       if (isMuted) return;
+      const ctx = ensureUnlocked();
+      if (!ctx) return;
       try {
-        const ctx = ensureUnlocked();
         const now = ctx.currentTime;
         [523.25, 783.99].forEach((freq, i) => {
           const osc    = ctx.createOscillator();

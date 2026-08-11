@@ -165,126 +165,162 @@ import ConceptGrid from './ConceptGrid';
 </div>
 
 <script>
-  /* Starfield com constelação (client-side script nativo Astro) */
-  function initStarfield(canvasId: string, dotColor: (a: number) => string, starCount?: number) {
-    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let W = 0, H = 0;
+  /* Starfields — lazy init via IntersectionObserver (só quando a seção entra no viewport) */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let globalMouseX = -9999;
+    let globalMouseY = -9999;
+    let mouseBound = false;
 
-    function resizeStarfield() {
-      W = canvas.clientWidth;
-      H = canvas.clientHeight;
-      canvas.width = Math.round(W * DPR);
-      canvas.height = Math.round(H * DPR);
-      ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
+    function bindGlobalMouse() {
+      if (mouseBound) return;
+      mouseBound = true;
+      window.addEventListener('mousemove', (e) => {
+        globalMouseX = e.clientX;
+        globalMouseY = e.clientY;
+      });
+      window.addEventListener('mouseleave', () => {
+        globalMouseX = -9999;
+        globalMouseY = -9999;
+      });
     }
-    resizeStarfield();
 
-    const STAR_COUNT = starCount || 320;
-    const stars = Array.from({ length: STAR_COUNT }, () => {
-      const hx = Math.random(), hy = Math.random();
-      const isBig = Math.random() < 0.12;
-      return {
-        hx, hy,
-        cx: hx * W, cy: hy * H,
-        vx: 0, vy: 0,
-        r: isBig ? Math.random() * 3.5 + 2.5 : Math.random() * 1.2 + 0.4,
-        a: 1,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: 0.008 + Math.random() * 0.012
-      };
-    });
+    function initStarfield(canvasId: string, dotColor: (a: number) => string, starCount?: number) {
+      const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+      let W = 0, H = 0;
 
-    let mouseX = -9999, mouseY = -9999;
-    window.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
-    });
-    window.addEventListener('mouseleave', () => { mouseX = -9999; mouseY = -9999; });
+      function resizeStarfield() {
+        W = canvas.clientWidth;
+        H = canvas.clientHeight;
+        canvas.width = Math.round(W * DPR);
+        canvas.height = Math.round(H * DPR);
+        ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+      resizeStarfield();
 
-    const INFLUENCE = 180;
-    const PULL = 1.1;
-    const SPRING = 0.022;
-    const DAMPING = 0.82;
-    const CONNECT_DIST = 90;
-    let rafId = 0;
+      const STAR_COUNT = starCount ?? (window.innerWidth < 768 ? 140 : 280);
+      const stars = Array.from({ length: STAR_COUNT }, () => {
+        const hx = Math.random(), hy = Math.random();
+        const isBig = Math.random() < 0.12;
+        return {
+          hx, hy,
+          cx: hx * W, cy: hy * H,
+          vx: 0, vy: 0,
+          r: isBig ? Math.random() * 3.5 + 2.5 : Math.random() * 1.2 + 0.4,
+          a: 1,
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.008 + Math.random() * 0.012
+        };
+      });
 
-    function draw() {
-      ctx!.clearRect(0, 0, W, H);
+      const INFLUENCE = 180;
+      const PULL = 1.1;
+      const SPRING = 0.022;
+      const DAMPING = 0.82;
+      const CONNECT_DIST = 90;
+      let rafId = 0;
+      let running = true;
 
-      for (const s of stars) {
-        const homeX = s.hx * W;
-        const homeY = s.hy * H;
+      function draw() {
+        if (!running) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = globalMouseX - rect.left;
+        const mouseY = globalMouseY - rect.top;
 
-        const dx = mouseX - s.cx;
-        const dy = mouseY - s.cy;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        ctx!.clearRect(0, 0, W, H);
 
-        if (dist < INFLUENCE) {
-          const force = (1 - dist / INFLUENCE) * PULL;
-          s.vx += (dx / dist) * force;
-          s.vy += (dy / dist) * force;
+        for (const s of stars) {
+          const homeX = s.hx * W;
+          const homeY = s.hy * H;
+          const dx = mouseX - s.cx;
+          const dy = mouseY - s.cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+          if (dist < INFLUENCE) {
+            const force = (1 - dist / INFLUENCE) * PULL;
+            s.vx += (dx / dist) * force;
+            s.vy += (dy / dist) * force;
+          }
+
+          s.vx += (homeX - s.cx) * SPRING;
+          s.vy += (homeY - s.cy) * SPRING;
+          s.vx *= DAMPING;
+          s.vy *= DAMPING;
+          s.cx += s.vx;
+          s.cy += s.vy;
+          s.pulse += s.pulseSpeed;
+
+          const pulseFactor = 1 + Math.sin(s.pulse) * 0.18;
+          ctx!.beginPath();
+          ctx!.arc(s.cx, s.cy, s.r * pulseFactor, 0, Math.PI * 2);
+          ctx!.fillStyle = dotColor(s.a);
+          ctx!.fill();
         }
 
-        s.vx += (homeX - s.cx) * SPRING;
-        s.vy += (homeY - s.cy) * SPRING;
-        s.vx *= DAMPING;
-        s.vy *= DAMPING;
-        s.cx += s.vx;
-        s.cy += s.vy;
-        s.pulse += s.pulseSpeed;
-
-        const pulseFactor = 1 + Math.sin(s.pulse) * 0.18;
-        const drawR = s.r * pulseFactor;
-
-        ctx!.beginPath();
-        ctx!.arc(s.cx, s.cy, drawR, 0, Math.PI * 2);
-        ctx!.fillStyle = dotColor(s.a);
-        ctx!.fill();
-      }
-
-      ctx!.save();
-      for (let i = 0; i < stars.length; i++) {
-        for (let j = i + 1; j < stars.length; j++) {
-          const a = stars[i], b = stars[j];
-          const dx = a.cx - b.cx, dy = a.cy - b.cy;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < CONNECT_DIST) {
-            const alpha = (1 - d / CONNECT_DIST) * 0.18;
-            ctx!.beginPath();
-            ctx!.moveTo(a.cx, a.cy);
-            ctx!.lineTo(b.cx, b.cy);
-            ctx!.strokeStyle = dotColor(alpha);
-            ctx!.lineWidth = 0.6;
-            ctx!.stroke();
+        ctx!.save();
+        for (let i = 0; i < stars.length; i++) {
+          for (let j = i + 1; j < stars.length; j++) {
+            const a = stars[i], b = stars[j];
+            const dx = a.cx - b.cx, dy = a.cy - b.cy;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < CONNECT_DIST) {
+              const alpha = (1 - d / CONNECT_DIST) * 0.18;
+              ctx!.beginPath();
+              ctx!.moveTo(a.cx, a.cy);
+              ctx!.lineTo(b.cx, b.cy);
+              ctx!.strokeStyle = dotColor(alpha);
+              ctx!.lineWidth = 0.6;
+              ctx!.stroke();
+            }
           }
         }
-      }
-      ctx!.restore();
+        ctx!.restore();
 
+        rafId = requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resizeStarfield);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          running = false;
+          cancelAnimationFrame(rafId);
+        } else {
+          running = true;
+          rafId = requestAnimationFrame(draw);
+        }
+      });
       rafId = requestAnimationFrame(draw);
     }
 
-    window.addEventListener('resize', resizeStarfield);
-    rafId = requestAnimationFrame(draw);
-    
-    // Pausa no visibilitychange
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) cancelAnimationFrame(rafId);
-      else rafId = requestAnimationFrame(draw);
-    });
-  }
+    const STARFIELD_CONFIGS = [
+      { id: 'nextStarfield',  color: (a: number) => `rgba(0,0,0,${a})` },
+      { id: 'nextStarfield2', color: (a: number) => `rgba(255,255,255,${a})` },
+      { id: 'nextStarfield3', color: (a: number) => `rgba(0,0,0,${a})` },
+      { id: 'nextStarfield4', color: (a: number) => `rgba(255,255,255,${a})` },
+      { id: 'nextStarfield5', color: (a: number) => `rgba(0,0,0,${a})` },
+      { id: 'nextStarfield6', color: (a: number) => `rgba(255,255,255,${a})` },
+      { id: 'nextStarfield7', color: (a: number) => `rgba(0,0,0,${a})` },
+    ];
 
-  // Init
-  initStarfield('nextStarfield',  (a) => `rgba(0,0,0,${a})`);
-  initStarfield('nextStarfield2', (a) => `rgba(255,255,255,${a})`);
-  initStarfield('nextStarfield3', (a) => `rgba(0,0,0,${a})`);
-  initStarfield('nextStarfield4', (a) => `rgba(255,255,255,${a})`);
-  initStarfield('nextStarfield5', (a) => `rgba(0,0,0,${a})`);
-  initStarfield('nextStarfield6', (a) => `rgba(255,255,255,${a})`);
-  initStarfield('nextStarfield7', (a) => `rgba(0,0,0,${a})`);
+    const started = new Set<string>();
+
+    for (const cfg of STARFIELD_CONFIGS) {
+      const canvas = document.getElementById(cfg.id);
+      const section = canvas?.closest('.next-section');
+      if (!canvas || !section) continue;
+
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries[0]?.isIntersecting || started.has(cfg.id)) return;
+        started.add(cfg.id);
+        bindGlobalMouse();
+        initStarfield(cfg.id, cfg.color);
+        observer.disconnect();
+      }, { rootMargin: '120px', threshold: 0.01 });
+
+      observer.observe(section);
+    }
+  }
 </script>

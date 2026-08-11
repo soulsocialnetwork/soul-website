@@ -247,8 +247,11 @@ export default function StoryUI() {
             muted
             playsInline
             preload="none"
+            width={36}
+            height={36}
           >
             <source src="/soulzinho-animacao-ofical-tela-inicial.webm" type="video/webm" />
+            <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
           </video>
         </div>
 

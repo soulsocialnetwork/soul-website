@@ -85,7 +85,11 @@ export default function SoulzinhoFixed() {
         src="/soulzinho-animacao-ofical-tela-inicial.webm"
         autoPlay loop muted playsInline
         preload="metadata"
-      />
+        width={200}
+        height={200}
+      >
+        <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+      </video>
       <p
         className={`soul-thought ${thought ? 'is-visible' : ''}`}
         id="soulThought"

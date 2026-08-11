@@ -63,26 +63,16 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
   const videoInnerRef  = useRef<HTMLVideoElement>(null); // mesmo elemento, ref para scale
   const logoWrapRef    = useRef<HTMLDivElement>(null);
   const noiseCanvasRef = useRef<HTMLCanvasElement>(null);
+  const grainStartedRef  = useRef(false);
 
-  const playLogoPlin = useCallback(() => {
-    if (typeof (window as any).__playLogoPlin === 'function') {
-      (window as any).__playLogoPlin();
-    }
-  }, []);
-
-  const playBackgroundMusic = useCallback(() => {
-    if (typeof (window as any).__playBackgroundMusic === 'function') {
-      (window as any).__playBackgroundMusic();
-    }
-  }, []);
-
-  /* ── Grain / noise canvas ─────────────────────────────────────── */
-  useEffect(() => {
+  const startGrain = useCallback(() => {
+    if (grainStartedRef.current) return;
+    grainStartedRef.current = true;
     const canvas = noiseCanvasRef.current;
     if (!canvas) return;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) return; // sem grain em reduced-motion
+    if (prefersReduced) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -108,11 +98,18 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       else rafId = requestAnimationFrame(drawNoise);
     };
     document.addEventListener('visibilitychange', onVisibility);
+  }, []);
 
-    return () => {
-      cancelAnimationFrame(rafId);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
+  const playLogoPlin = useCallback(() => {
+    if (typeof (window as any).__playLogoPlin === 'function') {
+      (window as any).__playLogoPlin();
+    }
+  }, []);
+
+  const playBackgroundMusic = useCallback(() => {
+    if (typeof (window as any).__playBackgroundMusic === 'function') {
+      (window as any).__playBackgroundMusic();
+    }
   }, []);
 
   /* ── Modo noite ─────────────────────────────────────────── */
@@ -160,6 +157,8 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     });
 
     /* ── STEP 2: iniciar vídeo ─────────────────────────────────── */
+    clipVideo.preload = 'auto';
+    clipVideo.load();
     clipVideo.currentTime = 0;
     clipVideo.muted       = false;
     clipVideo.volume      = 1;
@@ -296,8 +295,9 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       });
     }
 
+    startGrain();
     runSequence();
-  }, [runSequence]);
+  }, [runSequence, startGrain]);
 
   /* ── Hover do botão enter-gate ───────────────────────────────── */
   // O CSS cuida do hover (transform scale(1.04)) — apenas som via global handler
@@ -359,13 +359,14 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
               (videoInnerRef as any).current = el;
             }}
             playsInline
-            preload="auto"
+            preload="metadata"
             poster="/video-intro-poster.jpg"
+            width={480}
+            height={480}
           >
-            {/* WebM first — smaller, better for Chrome/Firefox */}
             <source src="/video-intro.webm" type="video/webm" />
-            {/* MP4 optimized fallback for Safari */}
             <source src="/video-intro-opt.mp4" type="video/mp4" />
+            <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
           </video>
         </div>
 
@@ -378,6 +379,7 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
               alt="soul."
               decoding="async"
               width={120}
+              height={40}
             />
           </div>
         </div>

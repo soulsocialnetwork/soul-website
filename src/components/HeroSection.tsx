@@ -31,7 +31,7 @@ export default function HeroSection() {
           className="hero-logo"
           alt="soul."
           width={60}
-          height="auto"
+          height={20}
           decoding="async"
         />
       </nav>
@@ -67,7 +67,11 @@ export default function HeroSection() {
               muted
               playsInline
               preload="metadata"
-            />
+              width={38}
+              height={38}
+            >
+              <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+            </video>
           </div>
           <div className="marker-line" />
           <p className="marker-label">[ VOCÊ ESTÁ AQUI : VIA LÁCTEA ]</p>
