@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>soul. </title>
+
+  <!-- Favicon Inline para evitar erro 404 no console -->
+  <link rel="icon" href="assets/soulzinho-logo.svg">
+  <!-- Tipografia Inter & Satoshi Fallback -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --fg: #ffffff;
+      --fg-dim: rgba(255, 255, 255, 0.5);
+      --display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body.is-night {
+      --bg: #050506;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--body);
+      overflow: hidden;
+    }
+
+    /* Oculta o cursor padrão do SO */
+    @media (pointer: fine) {
+
+      *,
+      html,
+      body,
+      #loader,
+      button,
+      .enter-gate,
+      .hero,
+      .marker,
+      .sound-toggle {
+        cursor: none !important;
+      }
+    }
+
+    /* ---------------------------------- LOADER ---------------------------------- */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s ease;
+    }
+
+    #loader.is-out {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
+    }
+
+    .stage-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .enter-gate {
+      z-index: 150;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.45);
+      font-family: inherit;
+      font-size: 36px;
+      font-weight: 200;
+      letter-spacing: 0.4em;
+      text-transform: lowercase;
+      outline: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 16px 32px 16px calc(32px + 0.4em); /* O extra na esquerda compensa o letter-spacing na direita */
+    }
+
+    .enter-gate:hover {
+      color: #ffffff;
+      transform: translate(-50%, -50%) scale(1.04);
+    }
+
+    .enter-gate.is-out {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.85);
+      pointer-events: none;
+    }
+
+    .audio-hint {
+      position: absolute;
+      top: calc(50% + 70px);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 10px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .audio-hint span {
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding-left: 0.25em; /* Compensa exatamente o letter-spacing da direita para o centro ficar perfeito */
+    }
+
+    .audio-hint.is-out {
+      opacity: 0;
+    }
+
+    .scroll-indicator {
+      position: fixed;
+      bottom: 6vh;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 1000;
+    }
+    .scroll-indicator.is-visible {
+      opacity: 0.5;
+      animation: pulse-scroll 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+    }
+    @keyframes pulse-scroll {
+      0% { transform: translateX(-50%) translateY(0); }
+      100% { transform: translateX(-50%) translateY(12px); }
+    }
+    .scroll-indicator svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #000;
+      stroke-width: 1.5;
+    }
+    .scroll-indicator span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #000;
+      font-weight: 500;
+    }
+
+    .video-frame {
+      position: relative;
+      z-index: 2;
+      width: min(65vmin, 480px);
+      height: min(65vmin, 480px);
+      overflow: hidden;
+      opacity: 0;
+      background: transparent;
+      transform: translate(-50%, -50%) scale(0.96);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.9) 15%, rgba(0, 0, 0, 0.5) 35%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 68%);
+      mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.9) 15%, rgba(0, 0, 0, 0.5) 35%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 68%);
+    }
+
+    .video-frame.is-in {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .video-frame.is-zooming video {
+      transform: scale(1.06);
+      transition: transform var(--zoom-duration, 4s) linear;
+    }
+
+    .video-frame.is-closing {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.94);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .video-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .tv-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.28) 1px, transparent 1px, transparent 2px);
+      opacity: 0.7;
+    }
+
+    #noiseCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0.18;
+      mix-blend-mode: screen;
+    }
+
+    .brand-stage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-wrap {
+      opacity: 0;
+      transform: scale(0.92);
+      width: 120px;
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .logo-wrap.is-in {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .logo-img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ---------------------------------- SITE / HERO ---------------------------------- */
+    #site {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      opacity: 0;
+      transform: scale(0.98);
+      transition: opacity 1s ease 0.2s, transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+    }
+
+    #site.is-visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .hero {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .hero-shader-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-shader-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 12, 0.45);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* CURSOR LENTE DE VIDRO */
+    .cursor-glass {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 6px;
+      margin: -3px 0 0 -3px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.25), inset 0 0 4px rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(1.5px) brightness(1.2);
+      -webkit-backdrop-filter: blur(1.5px) brightness(1.2);
+      pointer-events: none !important;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.02s linear;
+      will-change: transform;
+    }
+
+    /* CURSOR NEGATIVO */
+    .cursor-glass.is-negative {
+      width: 24px;
+      height: 24px;
+      margin: -12px 0 0 -12px;
+      background: #ffffff;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      mix-blend-mode: difference;
+      transition: opacity 0.3s ease, width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cursor-glass.is-visible {
+      opacity: 1;
+    }
+
+    .hero-nav {
+      position: fixed;
+      top: 40px;
+      left: 48px;
+      z-index: 60;
+      mix-blend-mode: difference;
+    }
+
+    .hero-logo {
+      display: block;
+      width: 60px;
+      height: auto;
+    }
+
+    .hero-actions {
+      position: fixed;
+      top: 40px;
+      right: 48px;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* BOTÃO SOM MINIMALISTA */
+    .sound-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0;
+      border-radius: 50%;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+      mix-blend-mode: difference;
+    }
+
+    .sound-toggle svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .sound-toggle .icon-muted {
+      display: none;
+    }
+
+    .sound-toggle.is-muted .icon-on {
+      display: none;
+    }
+
+    .sound-toggle.is-muted .icon-muted {
+      display: block;
+    }
+
+    .sound-toggle:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      transform: scale(1.08);
+    }
+
+    .sound-toggle.is-muted {
+      opacity: 0.45;
+    }
+
+    .hero-content {
+      position: absolute;
+      left: 48px;
+      bottom: 64px;
+      z-index: 3;
+      max-width: 62%;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--body);
+      font-style: italic;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--fg-dim);
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .hero-headline {
+      font-family: var(--display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: clamp(34px, 5.4vw, 78px);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+
+    /* COSMIC MARKER */
+    .cosmic-markers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .marker {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0.7;
+      transition: opacity 0.4s ease;
+      pointer-events: auto;
+    }
+
+    .marker:hover {
+      opacity: 1 !important;
+    }
+
+    .marker-soulzinho {
+      width: 50px;
+      height: auto;
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+      animation: soulzinho-float 4s ease-in-out infinite alternate;
+    }
+
+    .marker-soulzinho video {
+      width: 100%;
+      display: block;
+    }
+
+    .marker-line {
+      width: 0px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.4);
+      opacity: 0;
+      transition: width 0.4s ease, opacity 0.4s ease;
+    }
+
+    .marker-label {
+      font-family: var(--body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      color: var(--fg);
+      text-transform: uppercase;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .marker:hover .marker-line {
+      width: 60px;
+      opacity: 1;
+    }
+
+    .marker:hover .marker-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* SOULZINHO ÚNICO E FIXO */
+    .soulzinho-fixed {
+      position: fixed;
+      top: 50%;
+      right: 8vw;
+      transform: translateY(-50%);
+      width: clamp(220px, 26vw, 420px);
+      height: auto;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 59;
+      filter: grayscale(1) contrast(1000%) invert(1);
+      animation: soulzinho-float 5s ease-in-out infinite alternate;
+      transition: opacity 0.7s ease;
+    }
+
+    .soulzinho-fixed.is-visible {
+      opacity: 0.9;
+    }
+
+    .soul-video-layer {
+      width: 100%;
+      display: block;
+      transition: opacity 0.45s ease;
+    }
+
+    .soul-video-layer.soul-layer-b {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .soul-video-layer.soul-layer-a {
+      opacity: 0;
+    }
+
+    .soul-video-layer.is-active {
+      opacity: 1;
+    }
+
+    .soul-thought {
+      position: absolute;
+      left: 50%;
+      bottom: -30px;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 220px;
+      text-align: center;
+      font-family: var(--body);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 12.5px;
+      line-height: 1.3;
+      letter-spacing: 0.005em;
+      color: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    .soul-thought.is-visible {
+      opacity: 1;
+    }
+
+    @media (max-width: 900px) {
+      .soulzinho-fixed {
+        width: clamp(140px, 34vw, 220px);
+        right: 5vw;
+      }
+
+      .soulzinho-fixed.is-visible {
+        opacity: 0.55;
+      }
+
+      .soul-thought {
+        font-size: 11px;
+        max-width: 160px;
+        bottom: -24px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .soul-video-layer,
+      .soul-thought {
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ---------------------------------- STORY MODE ---------------------------------- */
+    .story-ui {
+      position: fixed;
+      right: calc(8vw + clamp(220px, 26vw, 420px) + 24px);
+      top: 50%;
+      width: clamp(260px, 24vw, 360px);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(-50%) scale(0.95);
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .story-ui.is-active {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+      pointer-events: auto;
+    }
+
+    .story-panel {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid rgba(0, 0, 0, 0.07);
+      border-radius: 22px;
+      padding: 22px 24px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .story-panel::after {
+      content: '';
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.96);
+      clip-path: polygon(0 0, 0 100%, 100% 50%);
+    }
+
+    .story-text {
+      font-family: var(--body);
+      font-size: 15.5px;
+      line-height: 1.5;
+      font-weight: 500;
+      color: #000000;
+      min-height: 1.5em;
+    }
+
+    .story-text.is-comment {
+      font-style: italic;
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 14px;
+    }
+
+    .story-caret {
+      display: inline-block;
+      width: 2px;
+      height: 0.95em;
+      background: currentColor;
+      margin-left: 2px;
+      vertical-align: -0.1em;
+      opacity: 0;
+      animation: story-caret-blink 0.9s steps(1) infinite;
+    }
+
+    .story-caret.is-visible {
+      opacity: 1;
+    }
+
+    @keyframes story-caret-blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .story-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .story-controls.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .story-auto-btn {
+      display: inline-flex;
+      align-items: center;
+      background: transparent;
+      color: rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(0, 0, 0, 0.15);
+      border-radius: 999px;
+      padding: 0 16px;
+      font-family: var(--body);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    
+    .story-auto-btn:hover {
+      color: #000;
+      border-color: rgba(0, 0, 0, 0.4);
+    }
+    
+    .story-auto-btn.is-active {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .story-continue-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #000000;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 22px;
+      font-family: var(--body);
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.25s ease;
+    }
+
+    .story-continue-btn:hover {
+      background: #262626;
+    }
+
+    .story-continue-btn:focus-visible {
+      outline: 2px solid #000000;
+      outline-offset: 3px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .story-reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .story-reveal.is-revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .story-ui {
+        left: 16px;
+        right: 16px;
+        width: auto;
+        bottom: 4vh;
+        top: auto;
+        transform: translateY(14px) scale(0.95);
+      }
+
+      .story-ui.is-active {
+        transform: translateY(0) scale(1);
+      }
+
+      .story-panel::after {
+        right: 40px;
+        top: auto;
+        bottom: -12px;
+        transform: none;
+        width: 24px;
+        height: 12px;
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+      }
+
+      .story-panel {
+        padding: 16px 18px;
+      }
+
+      .story-continue-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 22px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .story-ui,
+      .story-continue-btn,
+      .story-reveal {
+        transition-duration: 0.01ms !important;
+      }
+
+      .story-caret {
+        animation: none;
+        opacity: 0;
+      }
+    }
+
+    .milky-way-marker {
+      top: 55%;
+      left: 65%;
+    }
+
+    @keyframes soulzinho-float {
+      0% {
+        transform: translateY(-3px);
+      }
+
+      100% {
+        transform: translateY(3px);
+      }
+    }
+
+    /* SCROLL WARP / WHITEOUT */
+    .warp-overlay {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    /* EDITORIAL SUÍÇO */
+    .sections-track {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      height: 100%;
+      width: 800vw;
+      opacity: 0;
+      pointer-events: none;
+      will-change: opacity, transform;
+    }
+
+    .sections-track.is-active {
+      pointer-events: auto;
+    }
+
+    .next-section {
+      position: relative;
+      flex: 0 0 100vw;
+      width: 100vw;
+      height: 100%;
+      background: #ffffff;
+      color: #000000;
+      overflow-y: auto;
+      overflow-x: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      padding: 112px 48px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 40px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .next-section::-webkit-scrollbar {
+      display: none;
+    }
+
+    .next-starfield {
+      display: none;
+    }
+
+    .swiss-body {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin: 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* EFEITO DE ÁGUA/TREMIDO CONTÍNUO, SÓ NA SEÇÃO NEGATIVA (a dos números 9h13 / 3h37) */
+    #nextSection .swiss-body {
+      filter: url(#negativeSectionWave);
+    }
+
+    .soulzinho-fixed.is-negative-active {
+      filter: grayscale(1) contrast(1000%) invert(1) url(#negativeSectionWave);
+    }
+
+    .story-panel.is-negative-active {
+      filter: url(#negativeSectionWave);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #nextSection .swiss-body {
+        filter: none;
+      }
+
+      .soulzinho-fixed.is-negative-active {
+        filter: grayscale(1) contrast(1000%) invert(1);
+      }
+
+      .story-panel.is-negative-active {
+        filter: none;
+      }
+    }
+
+    .swiss-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      margin: 8px 0 16px 0;
+    }
+
+    .swiss-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .swiss-stat-num {
+      font-size: clamp(48px, 6vw, 96px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+    }
+
+    .swiss-stat-label {
+      font-size: clamp(14px, 1.3vw, 17px);
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.7);
+      line-height: 1.25;
+    }
+
+    .swiss-paragraph {
+      font-size: clamp(18px, 2vw, 28px);
+      line-height: 1.35;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: #000000;
+    }
+
+    .swiss-source {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: -12px;
+    }
+
+    .swiss-question {
+      font-size: clamp(20px, 2.4vw, 32px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .next-section {
+        padding: 96px 20px 24px;
+      }
+
+      .swiss-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    .next-section.section-negative {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .section-negative .swiss-stat-label {
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .section-negative .swiss-paragraph {
+      color: #ffffff;
+    }
+
+    .section-negative .swiss-source {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .section-negative .swiss-question {
+      color: #ffffff;
+    }
+
+    .swiss-headline {
+      font-family: var(--display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: clamp(26px, 3.6vw, 50px);
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      max-width: 780px;
+    }
+
+    .swiss-concept-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px 48px;
+      margin: 8px 0 16px 0;
+    }
+
+    .swiss-concept-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .swiss-concept-title {
+      font-family: var(--display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: clamp(20px, 2.1vw, 28px);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .swiss-concept-text {
+      font-size: clamp(14px, 1.3vw, 17px);
+      font-weight: 400;
+      line-height: 1.3;
+      color: rgba(0, 0, 0, 0.68);
+    }
+
+    .section-negative .swiss-concept-text {
+      color: rgba(255, 255, 255, 0.68);
+    }
+
+    @media (max-width: 900px) {
+      .swiss-concept-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    .swiss-footer-body {
+      justify-content: space-between;
+      height: 100%;
+      flex: 1;
+    }
+
+    .swiss-footer-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 24px;
+      margin-top: auto;
+    }
+
+    .swiss-footer-slogan {
+      font-size: clamp(14px, 1.4vw, 17px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .swiss-footer-credits {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(0, 0, 0, 0.4);
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+      padding-top: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <audio id="bgMusic" src="assets/music.mp3" loop preload="auto"></audio>
+  <audio id="shuaAudio" src="assets/tunnel-sound.mp3" loop preload="auto"></audio>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="underwaterWave" x="-40%" y="-40%" width="180%" height="180%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.022" numOctaves="3" seed="7" result="wave">
+          <animate attributeName="baseFrequency" dur="5s" values="0.008 0.022;0.016 0.048;0.008 0.022"
+            repeatCount="indefinite" />
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="wave" scale="12" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+
+      <filter id="negativeSectionWave" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="2" seed="5" result="negWave">
+          <animate attributeName="baseFrequency" dur="4s" values="0.012 0.03;0.02 0.05;0.012 0.03"
+            repeatCount="indefinite" />
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="negWave" scale="6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <main id="site">
+    <section class="hero">
+      <canvas id="shaderBg" class="hero-shader-bg"></canvas>
+      <div class="hero-shader-overlay"></div>
+
+      <div class="hero-nav">
+        <img src="assets/logo.svg" class="hero-logo" alt="soul.">
+      </div>
+
+      <div class="hero-actions">
+        <button class="sound-toggle" id="soundToggle" aria-label="Alternar Áudio" aria-pressed="false">
+          <svg class="icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg class="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="hero-content">
+        <p class="hero-eyebrow">[ projeto de bem-estar digital · menos algoritmo, mais humano ]</p>
+        <h1 class="hero-headline">uma rede social<br>projetada para devolver<br>a sua atenção</h1>
+      </div>
+
+      <div class="cosmic-markers">
+        <div class="marker milky-way-marker">
+          <div class="marker-soulzinho">
+            <video src="assets/soulzinho-animacao-ofical-tela-inicial.webm" autoplay loop muted playsinline></video>
+          </div>
+          <div class="marker-line"></div>
+          <p class="marker-label">[ VOCÊ ESTÁ AQUI : VIA LÁCTEA ]</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="warp-overlay" id="warpOverlay"></div>
+
+  <div class="soulzinho-fixed" id="soulzinhoFixed">
+    <video class="soul-video-layer soul-layer-a is-active"
+      src="assets/soulzinho-animacao-ofical-tela-inicial.webm" autoplay loop muted playsinline></video>
+    <video class="soul-video-layer soul-layer-b" src="assets/soulzinho-animacao-ofical-tela-inicial.webm" muted
+      playsinline></video>
+    <p class="soul-thought" id="soulThought" aria-hidden="true"></p>
+  </div>
+
+  <div class="story-ui" id="storyUI">
+    <div class="story-panel">
+      <p class="story-text" id="storyText" aria-hidden="true">
+        <span id="storyTextInner"></span><span class="story-caret" id="storyCaret" aria-hidden="true"></span>
+      </p>
+      <span class="sr-only" id="storyTextSR" aria-live="polite"></span>
+      <div class="story-controls" id="storyControls">
+        <button class="story-auto-btn" id="storyAutoBtn" type="button" aria-pressed="false" aria-label="Avanço Automático">
+          auto
+        </button>
+        <button class="story-continue-btn" id="storyContinueBtn" type="button" aria-label="Continuar a história">
+          continuar →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sections-track" id="sectionsTrack">
+
+    <!-- SEÇÃO EDITORIAL SUÍÇA -->
+    <section class="next-section" id="nextSection">
+      <canvas class="next-starfield" id="nextStarfield"></canvas>
+      <div class="swiss-body">
+        <div class="swiss-stats-grid story-reveal" data-story-reveal="stats">
+          <div class="swiss-stat-item">
+            <span class="swiss-stat-num" data-count-format="hm" data-count-target="553">9h13</span>
+            <span class="swiss-stat-label">por dia conectados à internet</span>
+          </div>
+          <div class="swiss-stat-item">
+            <span class="swiss-stat-num" data-count-format="hm" data-count-target="217">3h37</span>
+            <span class="swiss-stat-label">só em redes sociais, todo dia</span>
+          </div>
+        </div>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+          Você já abriu o celular só para ver "uma coisa rapidinho" e saiu de lá quarenta minutos depois, sem saber bem
+          o que viu, nem por que ainda estava lá? Isso é tão comum que a gente parou de estranhar. Mas os números
+          mostram o tamanho real disso: o Brasil está entre os países com maior tempo médio diário conectado à internet
+          do mundo, e parte relevante desse tempo resulta de decisões de design: feed algorítmico, notificações push e
+          rolagem infinita são desenvolvidos para maximizar o tempo de permanência do usuário na plataforma.
+        </p>
+        <p class="swiss-source story-reveal" data-story-reveal="context">
+          fonte: Digital 2024: Brazil, We Are Social & Meltwater · conceito de design persuasivo: Tristan Harris,
+          ex-design ethicist do Google, "How Technology Hijacks People's Minds" (2016)
+        </p>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se uma rede social fosse feita para te devolver o seu tempo, em vez de tomar ele de você?
+        </p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO NEGATIVA -->
+    <section class="next-section" id="nextSection2">
+      <canvas class="next-starfield" id="nextStarfield2"></canvas>
+      <div class="swiss-body">
+        <h2 class="swiss-headline story-reveal" data-story-reveal="headline">não é falta de força de vontade.<br>é design feito pra te prender.</h2>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="mechanism">
+          Em 1930, Skinner descobriu que recompensa imprevisível vicia mais do que recompensa certa.
+          É exatamente isso que acontece quando você desliza o dedo: às vezes tem algo bom, às vezes não.
+          Você não consegue parar porque seu cérebro está esperando a próxima surpresa.
+          A alavanca é o seu polegar. A máquina caça-níquel é o seu celular.
+        </p>
+        <div class="swiss-concept-grid story-reveal" data-story-reveal="concepts">
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">paginação</span>
+            <p class="swiss-concept-text">o conteúdo tem fim definido, em vez de rolagem infinita, um dos mecanismos
+              mais associados ao uso compulsivo de redes sociais.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">tela de intenção</span>
+            <p class="swiss-concept-text">separa o que o usuário deseja fazer do que a plataforma prioriza mostrar.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">ferramenta, não mestre</span>
+            <p class="swiss-concept-text">sem notificações desenhadas para gerar retorno automático ao aplicativo.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">foco protegido</span>
+            <p class="swiss-concept-text">sem mecanismos de recompensa variável, o mesmo princípio usado em
+              caça-níqueis.</p>
+          </div>
+        </div>
+        <p class="swiss-source story-reveal" data-story-reveal="source">
+          base conceitual: B. F. Skinner, reforço de razão variável (1930); Harris (2016), "FOMSI"
+        </p>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se a tecnologia devolvesse o controle ao usuário?
+        </p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 3 (BRANCA) -->
+    <section class="next-section" id="nextSection3">
+      <canvas class="next-starfield" id="nextStarfield3"></canvas>
+      <div class="swiss-body">
+        <h2 class="swiss-headline story-reveal" data-story-reveal="headline">estímulo em alta velocidade, atenção em queda.</h2>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+          Em 2024, um termo virou palavra do ano em vários dicionários: Brain Rot, o desgaste cognitivo do consumo
+          excessivo de conteúdo curto e rápido, associado a menor concentração, memória mais fraca e menos tolerância
+          para tarefas longas. O córtex pré-frontal, região ligada a foco e autocontrole, é a mais afetada por esse
+          padrão de estímulo constante. Pesquisadores descrevem um padrão em duas fases: no início, o uso é por prazer;
+          com o tempo, ele passa a ser fuga. Da ansiedade, do tédio, da solidão.
+        </p>
+        <p class="swiss-source story-reveal" data-story-reveal="context">
+          fonte: "Brain Rot", termo do ano (2024); dupla via de reforço, Jingsong Wang e Shen Wang; Harris (2016)
+        </p>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se publicar exigisse uma pausa, em vez de um impulso?
+        </p>
+        <div class="swiss-concept-grid story-reveal" data-story-reveal="concept" style="grid-template-columns: 1fr; max-width: 420px;">
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">qual a intenção desta publicação?</span>
+            <p class="swiss-concept-text">antes de postar, o soul pergunta. um segundo de pausa tira o cérebro do piloto
+              automático.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 4 (NEGATIVA) -->
+    <section class="next-section" id="nextSection4">
+      <canvas class="next-starfield" id="nextStarfield4"></canvas>
+      <div class="swiss-body">
+        <h2 class="swiss-headline story-reveal" data-story-reveal="headline">o vídeo espera por você. não o contrário.</h2>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+          Um estudo com mais de 7.600 adolescentes mostrou que não é o tempo conectado que machuca.
+          É como esse tempo é usado. Criar e interagir traz bem-estar. Rolar o feed e se comparar traz ansiedade.
+          A diferença entre usar e ser usado cabe numa decisão simples: quem aperta o play?
+        </p>
+        <p class="swiss-source story-reveal" data-story-reveal="context">
+          fonte: HBSC / Organização Mundial da Saúde (2023), 7.643 adolescentes
+        </p>
+        <div class="swiss-concept-grid story-reveal" data-story-reveal="concepts">
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">play manual</span>
+            <p class="swiss-concept-text">sem autoplay conduzindo automaticamente ao próximo vídeo.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">miniatura honesta</span>
+            <p class="swiss-concept-text">o conteúdo é identificável antes de o usuário decidir assistir.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">duração visível</span>
+            <p class="swiss-concept-text">tempo de reprodução exibido previamente, sem estimativa oculta.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">soults</span>
+            <p class="swiss-concept-text">o formato curto é mantido, mas a decisão de assistir permanece do usuário.</p>
+          </div>
+        </div>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se o conteúdo esperasse a decisão do usuário, em vez de antecipá-la?
+        </p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 5 (BRANCA) -->
+    <section class="next-section" id="nextSection5">
+      <canvas class="next-starfield" id="nextStarfield5"></canvas>
+      <div class="swiss-body">
+        <div class="swiss-stats-grid story-reveal" data-story-reveal="stats" style="grid-template-columns: 1fr; max-width: 340px;"
+          data-soul-guide="isso vai te surpreender.">
+          <div class="swiss-stat-item">
+            <span class="swiss-stat-num" data-count-format="suffix" data-count-target="6" data-count-suffix="x">6x</span>
+            <span class="swiss-stat-label">mais rápido informações falsas se espalham do que informações verdadeiras nas
+              redes sociais</span>
+          </div>
+        </div>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+          Quando cada pessoa vê um feed diferente, moldado por critérios de engajamento, forma-se uma fragmentação da
+          experiência informacional: bolhas que dificultam um ponto de referência comum entre os usuários. O que é
+          falso costuma ser mais novo, mais chocante, mais emocional, e o algoritmo que decide o que você vê tende a
+          priorizar isso. Em 2025, quase metade dos adolescentes americanos (48%) já diz achar que redes sociais fazem
+          mal para pessoas da idade deles, um salto em relação aos 32% registrados em 2022.
+        </p>
+        <p class="swiss-source story-reveal" data-story-reveal="context">
+          fonte: Vosoughi, Roy & Aral, "The Spread of True and False News Online", Science (2018) · Pew Research
+          Center (2025)
+        </p>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se a linha do tempo voltasse a ser a mesma para todos?
+        </p>
+        <div class="swiss-concept-grid story-reveal" data-story-reveal="concept" style="grid-template-columns: 1fr; max-width: 460px;">
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">feed 100% cronológico</span>
+            <p class="swiss-concept-text">a ordem de exibição não é definida por um algoritmo de recomendação, mas pela
+              sequência temporal das publicações, um modelo comparável ao adotado pela Wikipédia.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 6 (NEGATIVA) -->
+    <section class="next-section" id="nextSection6">
+      <canvas class="next-starfield" id="nextStarfield6"></canvas>
+      <div class="swiss-body">
+        <h2 class="swiss-headline story-reveal" data-story-reveal="headline">quando é grátis, você costuma ser o produto.</h2>
+        <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+          Quanto mais tempo você passa na plataforma, mais ela aprende sobre você.
+          Esse aprendizado vira propaganda. Essa propaganda vira receita.
+          Shoshana Zuboff chama isso de capitalismo de vigilância: seu comportamento como matéria-prima.
+          Não é teoria de conspiração. É o modelo de negócio.
+        </p>
+        <div class="swiss-concept-grid story-reveal" data-story-reveal="concepts">
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">sem login social</span>
+            <p class="swiss-concept-text">o cadastro via Google ou Facebook vincula o uso da plataforma a dados já
+              coletados por terceiros. o cadastro é feito de forma independente.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">sem perfil comportamental comercializável</span>
+            <p class="swiss-concept-text">não há construção de perfil de comportamento destinado à venda para
+              anunciantes.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">sem rastreamento silencioso</span>
+            <p class="swiss-concept-text">a navegação do usuário não é convertida em dado sem seu conhecimento.</p>
+          </div>
+          <div class="swiss-concept-item">
+            <span class="swiss-concept-title">dado do usuário, controle do usuário</span>
+            <p class="swiss-concept-text">o que é compartilhado, e com quem, é uma decisão do usuário.</p>
+          </div>
+        </div>
+        <p class="swiss-question story-reveal" data-story-reveal="question">
+          e se a privacidade fosse padrão, não uma opção paga?
+        </p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 7 (BRANCA) -->
+    <section class="next-section" id="nextSection7">
+      <canvas class="next-starfield" id="nextStarfield7"></canvas>
+      <div class="swiss-body swiss-footer-body">
+        <div class="swiss-footer-top">
+          <h2 class="swiss-headline story-reveal" data-story-reveal="headline">métricas de popularidade não equivalem a conexão real.</h2>
+          <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+            Contagem de curtidas, número de seguidores e visualizações têm sido associadas, em estudos de bem-estar
+            digital, ao uso dessas métricas como parâmetro de autoestima, particularmente entre usuários mais jovens,
+            com impacto relatado sobre ansiedade e autoimagem.
+          </p>
+          <p class="swiss-question story-reveal" data-story-reveal="question">
+            e se o indicador relevante fosse outro?
+          </p>
+          <div class="swiss-concept-grid story-reveal" data-story-reveal="concepts">
+            <div class="swiss-concept-item">
+              <span class="swiss-concept-title">amigos reais</span>
+              <p class="swiss-concept-text">o perfil evidencia conexões próximas, não a quantidade de interações
+                públicas recebidas.</p>
+            </div>
+            <div class="swiss-concept-item">
+              <span class="swiss-concept-title">pausas intencionais</span>
+              <p class="swiss-concept-text">a bio permite indicar períodos de ausência proposital: reconectar com a vida
+                offline também faz parte da proposta.</p>
+            </div>
+          </div>
+        </div>
+        <div class="swiss-footer-bottom story-reveal" data-story-reveal="footer">
+          <p class="swiss-paragraph swiss-footer-manifest">
+            O jeito como a gente usa redes sociais hoje não é normal. A gente só se acostumou tanto com isso, que parou
+            de perceber. O soul não promete resolver tudo isso sozinho. Mas promete uma coisa: nunca vai lucrar em cima
+            do seu tempo perdido.
+          </p>
+          <p class="swiss-footer-slogan">soul. menos algoritmo, mais humano.</p>
+          <p class="swiss-footer-credits">
+            projeto desenvolvido por Brendo Reis e equipe no Curso Técnico de Sistemas, SENAI Anchieta, 2026.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- WATER OVERLAY GLOBAL -->
+  <canvas id="waterCanvas" style="display:none;"></canvas>
+
+  <div id="scrollIndicator" class="scroll-indicator">
+    <span>role para continuar</span>
+    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M19 12l-7 7-7-7"/></svg>
+  </div>
+
+  <div class="cursor-glass is-negative" id="cursorGlass"></div>
+
+  <!-- INTRO LOADER -->
+  <div id="loader">
+    <button class="enter-gate stage-center" id="enterGate">
+      entrar.
+    </button>
+    
+    <p class="audio-hint stage-center" id="audioHint">
+      <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+      <span>ative o som · f11 no pc</span>
+    </p>
+
+    <div class="video-frame stage-center" id="videoFrame">
+      <div class="tv-overlay"></div>
+      <canvas id="noiseCanvas"></canvas>
+      <video id="clipVideo" playsinline preload="auto" poster="assets/poster.png">
+        <source src="assets/video-intro.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="brand-stage">
+      <div class="logo-wrap" id="logoWrap">
+        <img src="assets/logo.svg" class="logo-img" alt="soul.">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const loader = document.getElementById('loader');
+      const enterGate = document.getElementById('enterGate');
+      const videoFrame = document.getElementById('videoFrame');
+      const clipVideo = document.getElementById('clipVideo');
+      const logoWrap = document.getElementById('logoWrap');
+      const site = document.getElementById('site');
+      const cursorGlass = document.getElementById('cursorGlass');
+      const bgMusic = document.getElementById('bgMusic');
+      const soundToggle = document.getElementById('soundToggle');
+
+      let audioCtx = null;
+      let isMuted = false;
+      const pointer = { x: -9999, y: -9999, active: false };
+      const canCustomCursor = window.matchMedia('(pointer: fine)').matches;
+
+      if (canCustomCursor && cursorGlass) {
+        function moveCursor() {
+          cursorGlass.style.transform = `translate3d(${pointer.x}px, ${pointer.y}px, 0)`;
+          requestAnimationFrame(moveCursor);
+        }
+        requestAnimationFrame(moveCursor);
+
+        window.addEventListener('mousemove', (e) => {
+          pointer.x = e.clientX;
+          pointer.y = e.clientY;
+          if (!pointer.active) {
+            pointer.active = true;
+            cursorGlass.classList.add('is-visible');
+          }
+        });
+
+        window.addEventListener('mouseleave', () => {
+          pointer.active = false;
+          cursorGlass.classList.remove('is-visible');
+        });
+      }
+
+      const hours = new Date().getHours();
+      if (hours >= 19 || hours < 6) document.body.classList.add('is-night');
+
+      function getAudioCtx() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+      window.getAudioCtx = getAudioCtx;
+      window.getIsMuted = () => isMuted;
+
+      function playBackgroundMusic() {
+        if (!bgMusic) return;
+        bgMusic.volume = 0;
+        bgMusic.play().then(() => {
+          let vol = 0;
+          const fadeIn = setInterval(() => {
+            if (isMuted) return;
+            vol += 0.005;
+            if (vol >= 0.06) {
+              vol = 0.06;
+              clearInterval(fadeIn);
+            }
+            bgMusic.volume = vol;
+          }, 100);
+        }).catch(e => {
+          console.log('Aguardando interação para reproduzir áudio:', e);
+        });
+      }
+
+      if (soundToggle && bgMusic) {
+        soundToggle.addEventListener('click', () => {
+          isMuted = !isMuted;
+          bgMusic.muted = isMuted;
+          soundToggle.classList.toggle('is-muted', isMuted);
+          soundToggle.setAttribute('aria-pressed', String(isMuted));
+          soundToggle.setAttribute('aria-label', isMuted ? 'Ativar áudio' : 'Desativar áudio');
+        });
+      }
+
+      /* FUNÇÃO DE SOM DISPONÍVEL GLOBALMENTE */
+      function playClickSound() {
+        if (isMuted) return;
+        try {
+          const ctx = getAudioCtx();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } catch (e) { }
+      }
+      window.playClickSound = playClickSound;
+
+      /* SOM SUTIL DE HOVER, MAIS SUAVE E AGUDO QUE O CLIQUE */
+      function playHoverSound() {
+        if (isMuted) return;
+        try {
+          const ctx = getAudioCtx();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(920, now);
+          gain.gain.setValueAtTime(0.018, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.035);
+        } catch (e) { }
+      }
+      window.playHoverSound = playHoverSound;
+
+      /* APLICA SOM DE HOVER E CLIQUE AUTOMATICAMENTE EM TODO ELEMENTO INTERATIVO DO SITE */
+      const INTERACTIVE_SOUND_SELECTOR = 'button, a[href], .story-panel, .marker';
+
+      document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest(INTERACTIVE_SOUND_SELECTOR);
+        if (!target) return;
+        if (target.contains(e.relatedTarget)) return;
+        playHoverSound();
+      }, true);
+
+      document.addEventListener('click', (e) => {
+        const target = e.target.closest(INTERACTIVE_SOUND_SELECTOR);
+        if (!target) return;
+        playClickSound();
+      }, true);
+
+      function playLogoPlin() {
+        try {
+          const ctx = getAudioCtx();
+          const now = ctx.currentTime;
+          const freqs = [523.25, 783.99];
+
+          freqs.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1100, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.1 / (index + 1), now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.95);
+          });
+        } catch (e) { }
+      }
+
+      function resetStage() {
+        loader.style.display = '';
+        loader.classList.remove('is-out');
+        site.classList.remove('is-visible');
+        videoFrame.classList.remove('is-in', 'is-zooming', 'is-closing');
+        logoWrap.classList.remove('is-in');
+      }
+
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      async function revealSite() {
+        loader.classList.add('is-out');
+        site.classList.add('is-visible');
+
+        await wait(900);
+        loader.style.display = 'none';
+      }
+
+      async function runSequence() {
+        resetStage();
+
+        videoFrame.classList.add('is-in');
+
+        clipVideo.currentTime = 0;
+        clipVideo.muted = false;
+        clipVideo.volume = 1;
+
+        const playPromise = clipVideo.play();
+
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            clipVideo.muted = true;
+            clipVideo.play();
+          });
+        }
+
+        const dur = 5;
+        videoFrame.style.setProperty('--zoom-duration', dur + 's');
+        videoFrame.classList.add('is-zooming');
+
+        await new Promise(resolve => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            resolve();
+          };
+          clipVideo.addEventListener('ended', finish, { once: true });
+          clipVideo.addEventListener('error', finish, { once: true });
+          setTimeout(finish, dur * 1000);
+        });
+
+        videoFrame.classList.remove('is-zooming');
+        videoFrame.classList.add('is-closing');
+        
+        let vVol = clipVideo.volume;
+        const vFade = setInterval(() => {
+           vVol -= 0.05;
+           if (vVol <= 0) {
+              clearInterval(vFade);
+              clipVideo.pause();
+           } else {
+              clipVideo.volume = vVol;
+           }
+        }, 30);
+
+        // Aguarda o vídeo fechar (0.6s) + 1.2s de respiro silencioso em tela preta
+        await wait(1800);
+
+        playLogoPlin();
+        logoWrap.classList.add('is-in');
+
+        await wait(1200);
+
+        logoWrap.classList.remove('is-in');
+        await wait(500);
+
+        playBackgroundMusic();
+        await revealSite();
+      }
+
+      const audioHint = document.getElementById('audioHint');
+      enterGate.addEventListener('click', () => {
+        enterGate.classList.add('is-out');
+        if (audioHint) audioHint.classList.add('is-out');
+        runSequence();
+      });
+
+      const shuaAudio = document.getElementById('shuaAudio');
+      let shuaSource = null;
+      let shuaGain = null;
+      let shuaPanner = null;
+      let bgSource = null;
+      let bgFilter = null;
+      let isAudioSetup = false;
+      let lastProgress = 0;
+
+      function initAudioNodes() {
+        if (isAudioSetup || !window.getAudioCtx) return;
+        const ctx = window.getAudioCtx();
+        if (!ctx) return;
+
+        try {
+          if (shuaAudio) {
+            shuaSource = ctx.createMediaElementSource(shuaAudio);
+            shuaGain = ctx.createGain();
+            shuaGain.gain.setValueAtTime(0, ctx.currentTime);
+
+            if (ctx.createStereoPanner) {
+              shuaPanner = ctx.createStereoPanner();
+              shuaSource.connect(shuaGain);
+              shuaGain.connect(shuaPanner);
+              shuaPanner.connect(ctx.destination);
+            } else {
+              shuaSource.connect(shuaGain);
+              shuaGain.connect(ctx.destination);
+            }
+          }
+
+          if (bgMusic) {
+            bgSource = ctx.createMediaElementSource(bgMusic);
+            bgFilter = ctx.createBiquadFilter();
+            bgFilter.type = 'lowpass';
+            bgFilter.frequency.setValueAtTime(22000, ctx.currentTime);
+            bgSource.connect(bgFilter);
+            bgFilter.connect(ctx.destination);
+          }
+
+          isAudioSetup = true;
+        } catch (e) {
+          console.warn("Audio Node setup error:", e);
+        }
+      }
+
+      function playWhooshSHUUUU() {
+        if (!window.getAudioCtx) return;
+        const ctx = window.getAudioCtx();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const duration = 1.4;
+
+        const bufferSize = ctx.sampleRate * duration;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.4;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.setValueAtTime(3.5, now);
+        filter.frequency.setValueAtTime(80, now);
+        filter.frequency.exponentialRampToValueAtTime(3500, now + duration * 0.35);
+        filter.frequency.exponentialRampToValueAtTime(6000, now + duration * 0.6);
+        filter.frequency.exponentialRampToValueAtTime(800, now + duration);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.55, now + duration * 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + duration * 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + duration + 0.1);
+      }
+
+      window.updateWormholeAudio = function (progress, elapsed) {
+        if (!bgMusic || !shuaAudio) return;
+
+        const isMuted = window.getIsMuted ? window.getIsMuted() : false;
+        const ctx = window.getAudioCtx ? window.getAudioCtx() : null;
+
+        initAudioNodes();
+
+        if (bgFilter && ctx) {
+          const minFreq = 300;
+          const maxFreq = 22000;
+          const targetFreq = minFreq * Math.pow(maxFreq / minFreq, 1 - progress);
+          bgFilter.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.1);
+        }
+
+        if (progress > 0.02 && progress < 0.98) {
+          if (!isMuted && !bgMusic.paused) {
+            const duckIntensity = Math.sin(Math.min(progress, 1) * Math.PI) * 0.85;
+            const duckFactor = 1.0 - duckIntensity;
+            bgMusic.volume = 0.06 * duckFactor;
+          }
+
+          if (shuaAudio.paused) {
+            shuaAudio.play().catch(() => { });
+          }
+
+          const targetGain = Math.min(Math.sin(progress * Math.PI) * 2.5, 0.95);
+          if (shuaGain && ctx) {
+            shuaGain.gain.setTargetAtTime(targetGain, ctx.currentTime, 0.05);
+            shuaAudio.playbackRate = 0.96 + Math.sin(elapsed * 3.2) * 0.08 + Math.cos(elapsed * 1.7) * 0.04;
+            if (shuaPanner) {
+              shuaPanner.pan.setTargetAtTime(Math.sin(elapsed * 2.1) * 0.55, ctx.currentTime, 0.12);
+            }
+          }
+
+        } else {
+          if (!isMuted && !bgMusic.paused) {
+            bgMusic.volume = 0.06;
+          }
+
+          if (shuaGain && ctx) {
+            shuaGain.gain.setTargetAtTime(0, ctx.currentTime, 0.12);
+            setTimeout(() => {
+              if (shuaGain.gain.value < 0.01 && !shuaAudio.paused) {
+                shuaAudio.pause();
+              }
+            }, 400);
+          } else if (!shuaAudio.paused) {
+            shuaAudio.pause();
+          }
+        }
+
+        if (progress >= 0.85 && lastProgress < 0.85) {
+          playWhooshSHUUUU();
+        }
+        if (progress <= 0.15 && lastProgress > 0.15) {
+          playWhooshSHUUUU();
+        }
+
+        lastProgress = progress;
+      };
+
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('shaderBg');
+      if (!canvas) return;
+
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) return;
+
+      const VERT_SRC = `
+    attribute vec2 a_position;
+    void main() {
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  `;
+
+      const FRAG_SRC = `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
+    precision mediump float;
+    #endif
+
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform float u_progress;
+
+    float hash(vec2 p) {
+        p = 50.0 * fract(p * 0.3183099 + vec2(0.71, 0.113));
+        return -1.0 + 2.0 * fract(p.x * p.y * (p.x + p.y));
+    }
+
+    float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+                  mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+    }
+
+    float fbm(vec2 p) {
+        float f = 0.0;
+        float w = 0.5;
+        for (int i = 0; i < 5; i++) {
+            f += w * noise(p);
+            p *= 2.0;
+            w *= 0.5;
+        }
+        return f;
+    }
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+        
+        float mDist = length(uv - u_mouse);
+        float lensPull = 0.035 / (mDist + 0.08); 
+        uv -= normalize(uv - u_mouse + vec2(0.0001)) * lensPull * 0.12;
+
+        float zoom = 1.0 + pow(u_progress, 2.4) * 24.0;
+        uv /= zoom;
+
+        float d = length(uv);
+        
+        float twist = 4.5;
+        float spinSpeed = 0.15 + pow(u_progress, 2.0) * 8.0;
+        float angle = -u_time * spinSpeed - log(d + 0.001) * twist;
+        
+        float s = sin(angle), c = cos(angle);
+        mat2 rotMat = mat2(c, -s, s, c);
+        vec2 p = uv * rotMat;
+        
+        float arms = 2.0;
+        float spiral = cos(arms * atan(p.y, p.x));
+        
+        float n = fbm(p * 10.0 - u_time * 0.015);
+        float structure = smoothstep(-0.2, 1.3, spiral + n * 1.5);
+        
+        float falloff = exp(-d * 4.5);
+        structure *= falloff;
+        float core = exp(-d * 22.0);
+        
+        vec3 bg = vec3(0.04, 0.04, 0.047);       
+        vec3 dustColor = vec3(0.15, 0.15, 0.15); 
+        vec3 armColor = vec3(0.35, 0.35, 0.45);  
+        vec3 coreColor = vec3(0.7, 0.7, 0.7);    
+        
+        vec3 col = bg;
+        
+        col = mix(col, dustColor, smoothstep(0.0, 1.0, n) * falloff * 1.2);
+        col += armColor * structure * 1.8;
+        col += coreColor * core * 3.0;
+        
+        float h2 = smoothstep(0.6, 1.0, fbm(p * 20.0)) * structure;
+        col += vec3(0.9, 0.9, 0.9) * h2 * 1.8;
+        
+        float starHash = fract(sin(dot(uv * 180.0, vec2(12.9898, 78.233))) * 43758.5453);
+        float starfield = step(0.995, starHash) * (starHash - 0.995) * 200.0;
+        col += vec3(1.0, 1.0, 1.0) * starfield * max(falloff, 0.15);
+
+        {
+          float effectProgress = max(u_progress, 0.03);
+          float angle = atan(uv.y, uv.x);
+          float radius = length(uv) + 0.0008;
+
+          float sectors = 160.0;
+          float sector = floor(angle * sectors);
+          float sectorHash = fract(sin(sector * 91.345) * 47453.5);
+
+          float speed = u_time * 1.2 + pow(u_progress, 2.0) * 35.0;
+          float radialCoord = fract(1.0 / radius * 0.55 - speed + sectorHash * 3.0);
+
+          float trailLength = mix(0.02, 0.95, effectProgress);
+          float line = smoothstep(trailLength, 0.0, radialCoord);
+
+          line *= step(0.32, sectorHash);
+
+          float tunnel = line / (radius * 2.0 + 0.1);
+          vec3 tunnelColor = mix(vec3(0.45, 0.5, 0.75), vec3(1.0, 1.0, 1.0), u_progress);
+
+          col += tunnelColor * tunnel * effectProgress * 8.5;
+        }
+
+        col += vec3(1.0) * pow(u_progress, 2.0) * 1.1;
+        col *= smoothstep(1.5, 0.2, d);
+        
+        gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+    }
+  `;
+
+      function compileShader(type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error('Erro de compilação do Shader:', gl.getShaderInfoLog(s));
+          gl.deleteShader(s);
+          return null;
+        }
+        return s;
+      }
+
+      const vertShader = compileShader(gl.VERTEX_SHADER, VERT_SRC);
+      const fragShader = compileShader(gl.FRAGMENT_SHADER, FRAG_SRC);
+      if (!vertShader || !fragShader) return;
+
+      const program = gl.createProgram();
+      gl.attachShader(program, vertShader);
+      gl.attachShader(program, fragShader);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+
+      const positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+      const posLoc = gl.getAttribLocation(program, 'a_position');
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+      const uRes = gl.getUniformLocation(program, 'u_resolution');
+      const uTime = gl.getUniformLocation(program, 'u_time');
+      const uMouse = gl.getUniformLocation(program, 'u_mouse');
+      const uProgress = gl.getUniformLocation(program, 'u_progress');
+
+      let targetMouseX = 0, targetMouseY = 0;
+      let currentMouseX = 0, currentMouseY = 0;
+
+      window.addEventListener('mousemove', (e) => {
+        targetMouseX = (e.clientX - 0.5 * window.innerWidth) / Math.min(window.innerWidth, window.innerHeight);
+        targetMouseY = -(e.clientY - 0.5 * window.innerHeight) / Math.min(window.innerWidth, window.innerHeight);
+      });
+
+      const warpOverlay = document.getElementById('warpOverlay');
+      const heroContentEl = document.querySelector('.hero-content');
+      const heroActionsEl = document.querySelector('.hero-actions');
+      const cosmicMarkersEl = document.querySelector('.cosmic-markers');
+      const soulFixedEl = document.getElementById('soulzinhoFixed');
+      const soulLayerA = soulFixedEl ? soulFixedEl.querySelector('.soul-layer-a') : null;
+      const soulLayerB = soulFixedEl ? soulFixedEl.querySelector('.soul-layer-b') : null;
+      const soulThoughtEl = document.getElementById('soulThought');
+      const prefersReducedMotionSoul = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const SOUL_EXPRESSIONS = [
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: null },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: 'dá pra perceber quando estão te puxando.' },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: 'até eu canso de tanto estímulo.' },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: 'sem pressa. o play é seu.' },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: null },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: 'isso devia ser óbvio.' },
+        { video: 'assets/soulzinho-animacao-ofical-tela-inicial.webm', thought: 'menos números, mais gente.' },
+      ];
+
+      const soulVisited = new Array(SOUL_EXPRESSIONS.length).fill(false);
+      let soulCurrentIndex = -1;
+      let soulThoughtTimer = null;
+      let soulActiveLayerIsA = true;
+
+      function setSoulThought(text) {
+        if (!soulThoughtEl) return;
+        clearTimeout(soulThoughtTimer);
+        soulThoughtEl.classList.remove('is-visible');
+
+        const reveal = () => {
+          soulThoughtEl.textContent = text;
+          void soulThoughtEl.offsetWidth;
+          soulThoughtEl.classList.add('is-visible');
+          soulThoughtTimer = setTimeout(() => {
+            soulThoughtEl.classList.remove('is-visible');
+          }, 2800);
+        };
+
+        if (prefersReducedMotionSoul) {
+          reveal();
+        } else {
+          soulThoughtTimer = setTimeout(reveal, 400);
+        }
+      }
+
+      function setSoulExpression(index) {
+        if (!soulLayerA || !soulLayerB) return;
+        const expr = SOUL_EXPRESSIONS[index];
+        if (!expr) return;
+
+        const incoming = soulActiveLayerIsA ? soulLayerB : soulLayerA;
+        const outgoing = soulActiveLayerIsA ? soulLayerA : soulLayerB;
+
+        if (incoming.getAttribute('src') !== expr.video) {
+          incoming.setAttribute('src', expr.video);
+          incoming.load();
+        }
+        incoming.play().catch(() => { });
+
+        incoming.classList.add('is-active');
+        outgoing.classList.remove('is-active');
+        soulActiveLayerIsA = !soulActiveLayerIsA;
+      }
+
+      function updateSoulState(shift) {
+        const index = Math.max(0, Math.min(SOUL_EXPRESSIONS.length - 1, Math.round(shift)));
+        const isNegativeSection = index === 0;
+        if (soulFixedEl) soulFixedEl.classList.toggle('is-negative-active', isNegativeSection);
+        if (storyPanelEl) storyPanelEl.classList.toggle('is-negative-active', isNegativeSection);
+        if (index === soulCurrentIndex) return;
+        soulCurrentIndex = index;
+
+        setSoulExpression(index);
+
+        if (!soulVisited[index]) {
+          soulVisited[index] = true;
+          if (SOUL_EXPRESSIONS[index].thought) {
+            setSoulThought(SOUL_EXPRESSIONS[index].thought);
+          }
+        }
+      }
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function formatCount(value, format, suffix) {
+        const rounded = Math.round(value);
+        if (format === 'hm') {
+          const h = Math.floor(rounded / 60);
+          const m = String(rounded % 60).padStart(2, '0');
+          return `${h}h${m}`;
+        }
+        if (format === 'suffix') {
+          return `${rounded}${suffix || ''}`;
+        }
+        return String(rounded);
+      }
+
+      function animateStatCount(el) {
+        const target = parseFloat(el.dataset.countTarget);
+        if (Number.isNaN(target)) return;
+        const format = el.dataset.countFormat || 'plain';
+        const suffix = el.dataset.countSuffix || '';
+        const finalText = formatCount(target, format, suffix);
+
+        if (prefersReducedMotionSoul) {
+          el.textContent = finalText;
+          return;
+        }
+
+        const duration = 750;
+        const start = performance.now();
+
+        function tick(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = easeOutCubic(t);
+          el.textContent = formatCount(target * eased, format, suffix);
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            el.textContent = finalText;
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      document.querySelectorAll('.swiss-stat-num[data-count-target]').forEach(el => {
+        if (!prefersReducedMotionSoul) {
+          el.textContent = formatCount(0, el.dataset.countFormat, el.dataset.countSuffix);
+        }
+      });
+
+      const statGrids = document.querySelectorAll('.swiss-stats-grid[data-soul-guide]');
+
+      if (statGrids.length && 'IntersectionObserver' in window) {
+        const guideObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const grid = entry.target;
+            guideObserver.unobserve(grid);
+
+            const guideText = grid.dataset.soulGuide;
+            const stats = grid.querySelectorAll('.swiss-stat-num[data-count-target]');
+
+            if (guideText) {
+              setSoulThought(guideText);
+            }
+
+            const guideDelay = prefersReducedMotionSoul ? 0 : 900;
+            setTimeout(() => {
+              stats.forEach(animateStatCount);
+            }, guideDelay);
+          });
+        }, { threshold: 0.4 });
+
+        statGrids.forEach(grid => guideObserver.observe(grid));
+      }
+
+      const storyUIEl = document.getElementById('storyUI');
+      const storyTextEl = document.getElementById('storyText');
+      const storyTextInnerEl = document.getElementById('storyTextInner');
+      const storyCaretEl = document.getElementById('storyCaret');
+      const storyControlsEl = document.getElementById('storyControls');
+      const storyAutoBtn = document.getElementById('storyAutoBtn');
+      const storyContinueBtnEl = document.getElementById('storyContinueBtn');
+      const storyTextSREl = document.getElementById('storyTextSR');
+
+      const TYPEWRITER_MS_PER_CHAR = 3;
+      let isStoryAutoMode = false;
+
+      if (storyAutoBtn) {
+        storyAutoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          isStoryAutoMode = !isStoryAutoMode;
+          storyAutoBtn.classList.toggle('is-active', isStoryAutoMode);
+          storyAutoBtn.setAttribute('aria-pressed', isStoryAutoMode);
+          if (isStoryAutoMode && storyControlsEl.classList.contains('is-visible')) {
+            storyContinueBtnEl.click();
+          }
+        });
+      }
+
+      const stories = {
+        intro: [
+          { type: 'dialogue', text: 'Oi.' },
+          { type: 'dialogue', text: 'Eu sou o Soulzinho. E vou te acompanhar até o fim.' },
+          { type: 'dialogue', text: 'Porque hoje eu não vim aqui pra te mostrar só um projeto de tecnologia. Vim fazer uma pergunta.' },
+          { type: 'dialogue', text: 'Você já abriu o celular só pra ver "uma coisa rapidinho"? Aí, quarenta minutos depois, saiu de lá sem saber muito bem o que viu.' },
+          { type: 'comment', text: 'Levanta a mão quem nunca. (Ninguém levantou, né? Eu avisei.)' },
+          { type: 'stat', reveal: 'stats', text: 'Isso é tão comum que a gente parou de estranhar. Mas os números mostram o tamanho real disso.' },
+          { type: 'comment', text: 'E olha que eu nem contei as vezes que você jurou que ia "só checar uma notificação".' },
+          { type: 'text', reveal: 'context', text: 'E não é por acaso. Parte relevante desse tempo é resultado de decisões de design.' },
+          { type: 'dialogue', reveal: 'question', text: 'Foi daí que surgiu a pergunta que guia esse projeto inteiro.' },
+          { type: 'end', text: 'Bom... era isso que eu queria te mostrar por aqui.' },
+          { type: 'end', text: 'Agora você pode continuar.' },
+        ],
+        s2: [
+          { type: 'dialogue', text: 'Ei, de novo eu.' },
+          { type: 'dialogue', text: 'A resposta curta pra tudo isso é: não é falta de força de vontade sua.' },
+          { type: 'text', reveal: 'headline', text: 'Existem técnicas específicas de captura de atenção. E dá pra identificar e evitar todas elas.' },
+          { type: 'text', reveal: 'mechanism', text: 'Em 1930, Skinner descobriu que recompensa imprevisível vicia mais que recompensa certa. É a mesma lógica da máquina caça-níquel.' },
+          { type: 'comment', text: 'Plot twist: a alavanca é o seu polegar.' },
+          { type: 'dialogue', text: 'Deixa eu te mostrar quatro decisões que a gente tomou pra quebrar esse ciclo.' },
+          { type: 'text', reveal: 'concepts', text: 'Sem rolagem infinita, sem autoplay, sem recompensa variável. Repara.' },
+          { type: 'comment', text: 'Sim, foi difícil resistir à tentação de colocar isso tudo aqui. 😅' },
+          { type: 'text', reveal: 'source', text: 'E olha, isso não é só opinião nossa. Tem base em pesquisa séria.' },
+          { type: 'dialogue', reveal: 'question', text: 'Daí ficou essa pergunta: e se a tecnologia devolvesse o controle pra você?' },
+          { type: 'end', text: 'Beleza, posso seguir.' },
+          { type: 'end', text: 'Bora pra próxima.' },
+        ],
+        s3: [
+          { type: 'dialogue', text: 'De novo por aqui, hein?' },
+          { type: 'text', reveal: 'headline', text: 'Essa aqui é séria: estímulo rápido demais, atenção caindo cada vez mais.' },
+          { type: 'text', reveal: 'context', text: 'Em 2024, "Brain Rot" virou palavra do ano em vários dicionários: o desgaste cognitivo do consumo excessivo de conteúdo rápido.' },
+          { type: 'comment', text: 'É tipo aquele amigo que você não procura porque quer, mas porque não aguenta ficar sozinho com os próprios pensamentos. Só que esse amigo é um app.' },
+          { type: 'dialogue', reveal: 'question', text: 'Então pensamos: e se publicar exigisse uma pausa, em vez de um impulso?' },
+          { type: 'text', reveal: 'concept', text: 'Por isso, antes de você postar, o soul pergunta qual é a sua intenção.' },
+          { type: 'comment', text: 'Um segundo só. Mas muda bastante coisa.' },
+          { type: 'end', text: 'Isso é o que eu queria te mostrar aqui.' },
+          { type: 'end', text: 'Pode seguir.' },
+        ],
+        s4: [
+          { type: 'dialogue', text: 'Oi de novo.' },
+          { type: 'text', reveal: 'context', text: 'Um estudo com mais de 7.600 adolescentes mostrou algo importante: o bem-estar não depende só de quanto tempo você fica conectado, mas de como.' },
+          { type: 'comment', text: 'Uso ativo: interagir, criar, decidir. Isso ajuda. Uso passivo: só rolar e se comparar. Isso machuca.' },
+          { type: 'text', reveal: 'headline', text: 'Por isso, aqui o vídeo espera por você. Não o contrário.' },
+          { type: 'text', reveal: 'concepts', text: 'Play manual, miniatura honesta, duração visível, e os soults.' },
+          { type: 'comment', text: 'Sem vídeo pulando pro próximo sozinho. Prometo.' },
+          { type: 'dialogue', reveal: 'question', text: 'E se o conteúdo esperasse a sua decisão, em vez de antecipar ela?' },
+          { type: 'end', text: 'Curti mostrar essa parte pra você.' },
+          { type: 'end', text: 'Bora continuar.' },
+        ],
+        s5: [
+          { type: 'dialogue', text: 'Essa próxima é a que mais me assusta.' },
+          { type: 'stat', reveal: 'stats', text: 'Olha esse número aqui.' },
+          { type: 'comment', text: '6 vezes mais rápido. Sério mesmo.' },
+          { type: 'text', reveal: 'context', text: 'Quando cada pessoa vê um feed diferente, a gente perde um ponto de referência em comum. Isso cria bolhas. E até quem cresceu dentro disso já percebeu.' },
+          { type: 'comment', text: 'Até a geração que cresceu dentro disso está percebendo que tem algo errado. E olha que eu nem cobrei nada por essa observação.' },
+          { type: 'dialogue', reveal: 'question', text: 'E se a linha do tempo voltasse a ser a mesma pra todo mundo?' },
+          { type: 'text', reveal: 'concept', text: 'Por isso aqui o feed é 100% cronológico. Meio que como a Wikipédia funciona.' },
+          { type: 'end', text: 'Prontinho, essa é a explicação.' },
+          { type: 'end', text: 'Segue o jogo.' },
+        ],
+        s6: [
+          { type: 'dialogue', text: 'Penúltima parada. Aguenta mais um pouco comigo?' },
+          { type: 'text', reveal: 'headline', text: 'Em modelo gratuito, o produto costuma ser você. O seu dado.' },
+          { type: 'text', reveal: 'context', text: 'Quanto mais tempo você fica, mais dado a plataforma coleta, mais precisa fica a propaganda que te vende depois.' },
+          { type: 'text', reveal: 'concepts', text: 'Sem login social, sem perfil pra vender, sem rastreamento silencioso.' },
+          { type: 'comment', text: 'Sim, isso deu bem mais trabalho de programar. Valeu a pena.' },
+          { type: 'dialogue', reveal: 'question', text: 'E se a privacidade fosse o padrão, e não uma opção paga?' },
+          { type: 'end', text: 'É basicamente isso.' },
+          { type: 'end', text: 'Falta só mais uma.' },
+        ],
+        s7: [
+          { type: 'dialogue', text: 'Chegamos na última.' },
+          { type: 'text', reveal: 'headline', text: 'Curtida, seguidor, view. Isso não é conexão de verdade.' },
+          { type: 'text', reveal: 'context', text: 'Isso tem sido associado a ansiedade e autoimagem, principalmente em quem é mais jovem.' },
+          { type: 'comment', text: 'Confesso que isso me deixa um pouco triste.' },
+          { type: 'dialogue', reveal: 'question', text: 'Então a pergunta ficou: e se o indicador relevante fosse outro?' },
+          { type: 'text', reveal: 'concepts', text: 'Amigos reais em vez de números. E espaço pra pausas intencionais também.' },
+          { type: 'dialogue', reveal: 'footer', text: 'O jeito como a gente usa redes sociais hoje não é normal. A gente só se acostumou tanto com isso, que parou de perceber.' },
+          { type: 'comment', text: 'E olha que eu sou um fantasma. Se até eu percebi, tem esperança pra todo mundo.' },
+          { type: 'end', text: 'O soul não promete resolver tudo isso sozinho. Mas promete uma coisa: nunca vai lucrar em cima do seu tempo perdido.' },
+          { type: 'end', text: 'Obrigado por vir até aqui comigo. Agora sim, o scroll é todo seu. 👻' },
+        ],
+      };
+
+      const STORY_SECTION_MAP = {
+        intro: 'nextSection',
+        s2: 'nextSection2',
+        s3: 'nextSection3',
+        s4: 'nextSection4',
+        s5: 'nextSection5',
+        s6: 'nextSection6',
+        s7: 'nextSection7',
+      };
+
+      const STORY_ORDER = ['intro', 's2', 's3', 's4', 's5', 's6', 's7'];
+
+      const story = {
+        active: false,
+        key: null,
+        index: 0,
+        typing: false,
+        finished: {}
+      };
+
+      let typewriterTimer = null;
+      let typewriterFullText = '';
+      let typewriterOnComplete = null;
+
+      function getRevealTargets(key) {
+        const sectionId = STORY_SECTION_MAP[story.key] || 'nextSection';
+        return document.querySelectorAll(`#${sectionId} [data-story-reveal="${key}"]`);
+      }
+
+      function revealContent(key) {
+        if (!key) return;
+        getRevealTargets(key).forEach(el => el.classList.add('is-revealed'));
+      }
+
+      const scrollIndicator = document.getElementById('scrollIndicator');
+
+      function triggerStoryMode(key) {
+        if (story.finished[key] || story.active) return;
+        story.key = key;
+        story.active = true;
+        story.index = -1;
+        if (scrollIndicator) scrollIndicator.classList.remove('is-visible');
+        if (storyUIEl) storyUIEl.classList.add('is-active');
+        lockScroll();
+        advanceStory();
+      }
+
+      function lockScroll(sectionIndex) {
+        const idx = sectionIndex || 0;
+        targetProgress = HERO_SPAN + idx;
+        smoothProgress = HERO_SPAN + idx;
+      }
+
+      function unlockScroll() {}
+
+      function startStoryMode(key, sectionIndex) {
+        if (story.active || story.finished[key] || !stories[key] || !stories[key].length) return;
+        story.active = true;
+        story.key = key;
+        story.index = 0;
+        lockScroll(sectionIndex);
+        if (scrollIndicator) scrollIndicator.classList.remove('is-visible');
+        if (storyUIEl) storyUIEl.classList.add('is-active');
+        showBeat();
+      }
+
+      function showBeat() {
+        const beats = stories[story.key];
+        const beat = beats[story.index];
+        if (!beat) { endStoryMode(); return; }
+
+        if (storyTextEl) storyTextEl.classList.toggle('is-comment', beat.type === 'comment');
+        if (storyContinueBtnEl) storyContinueBtnEl.classList.remove('is-visible');
+
+        if (beat.reveal) revealContent(beat.reveal);
+        if (storyTextSREl) storyTextSREl.textContent = beat.text;
+
+        typeText(beat.text, () => {
+          if (beat.type === 'stat' && beat.reveal) {
+            runStatCountForReveal(beat.reveal);
+          } else {
+            showContinueButton();
+          }
+        });
+      }
+
+      function typeText(text, onComplete) {
+        clearTimeout(typewriterTimer);
+        typewriterFullText = text;
+        typewriterOnComplete = onComplete;
+        story.typing = true;
+        if (storyTextInnerEl) storyTextInnerEl.textContent = '';
+        if (storyCaretEl) storyCaretEl.classList.add('is-visible');
+        if (storyControlsEl) storyControlsEl.classList.remove('is-visible');
+
+        if (prefersReducedMotionSoul) {
+          finishTyping();
+          return;
+        }
+
+        let i = 0;
+        function tick() {
+          i++;
+          if (storyTextInnerEl) storyTextInnerEl.textContent = text.slice(0, i);
+          if (i >= text.length) {
+            finishTyping();
+            return;
+          }
+          typewriterTimer = setTimeout(tick, TYPEWRITER_MS_PER_CHAR);
+        }
+        tick();
+      }
+
+      let autoAdvanceTimer = null;
+
+      function finishTyping() {
+        clearTimeout(typewriterTimer);
+        clearTimeout(autoAdvanceTimer);
+        if (storyTextInnerEl) storyTextInnerEl.textContent = typewriterFullText;
+        if (storyCaretEl) storyCaretEl.classList.remove('is-visible');
+        story.typing = false;
+        const cb = typewriterOnComplete;
+        typewriterOnComplete = null;
+        if (cb) cb(); else showContinueButton();
+      }
+
+      function showContinueButton() {
+        if (!storyControlsEl) return;
+        storyControlsEl.classList.add('is-visible');
+        if (storyContinueBtnEl) storyContinueBtnEl.focus({ preventScroll: true });
+        
+        clearTimeout(autoAdvanceTimer);
+        if (isStoryAutoMode) {
+          autoAdvanceTimer = setTimeout(() => {
+            if (story.active && storyControlsEl.classList.contains('is-visible')) {
+              storyContinueBtnEl.click();
+            }
+          }, 2200); // Avança automaticamente após 2.2 segundos
+        }
+      }
+
+      function runStatCountForReveal(revealKey) {
+        const sectionId = STORY_SECTION_MAP[story.key] || 'nextSection';
+        const stats = document.querySelectorAll(
+          `#${sectionId} [data-story-reveal="${revealKey}"] .swiss-stat-num[data-count-target]`
+        );
+        if (!stats.length || prefersReducedMotionSoul) {
+          showContinueButton();
+          return;
+        }
+        stats.forEach(animateStatCount);
+        setTimeout(showContinueButton, 750 + 200);
+      }
+
+      function advanceStory() {
+        if (!story.active) return;
+        if (story.typing) {
+          finishTyping();
+          return;
+        }
+        const beats = stories[story.key];
+        story.index++;
+        if (story.index >= beats.length) {
+          endStoryMode();
+        } else {
+          showBeat();
+        }
+      }
+
+      function endStoryMode() {
+        story.finished[story.key] = true;
+        story.active = false;
+        story.key = null;
+        if (storyUIEl) storyUIEl.classList.remove('is-active');
+        unlockScroll();
+        if (scrollIndicator) scrollIndicator.classList.add('is-visible');
+      }
+
+      // AVANÇA A HISTÓRIA AO CLICAR NO BOTÃO (o som já é disparado automaticamente)
+      if (storyContinueBtnEl) {
+        storyContinueBtnEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          advanceStory();
+        });
+      }
+
+      // PERMITE CLICAR EM QUALQUER LUGAR DO BALÃO PARA AVANÇAR
+      const storyPanelEl = document.querySelector('.story-panel');
+      if (storyPanelEl) {
+        storyPanelEl.addEventListener('click', () => {
+          if (story.active) {
+            advanceStory();
+          }
+        });
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (!story.active) return;
+        const blockedKeys = [' ', 'Spacebar', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp'];
+        if (blockedKeys.includes(e.key) && document.activeElement !== storyContinueBtnEl) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      const sectionsTrackEl = document.getElementById('sectionsTrack');
+      const sections = [
+        { el: document.getElementById('nextSection') },
+        { el: document.getElementById('nextSection2') },
+        { el: document.getElementById('nextSection3') },
+        { el: document.getElementById('nextSection4') },
+        { el: document.getElementById('nextSection5') },
+        { el: document.getElementById('nextSection6') },
+        { el: document.getElementById('nextSection7') },
+      ];
+
+      let targetProgress = 0;
+      let smoothProgress = 0;
+
+      const HERO_SPAN = 2.2;
+      const MAX_SHIFT = sections.length - 1;
+      const SECTIONS_END = HERO_SPAN + MAX_SHIFT;
+      const RETURN_SPAN = 2.2;
+      const TOTAL_PROGRESS = SECTIONS_END + RETURN_SPAN;
+
+      function smoothstep(min, max, value) {
+        const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+        return x * x * (3 - 2 * x);
+      }
+
+      function setHeroOpacity(tunnelP) {
+        const fade = 1 - smoothstep(0.1, 0.7, tunnelP);
+        [heroContentEl, heroActionsEl, cosmicMarkersEl].forEach(el => {
+          if (el) el.style.opacity = fade;
+        });
+      }
+
+      function applyProgress(p) {
+        let rawP, tunnelP, trackOpacity, shift;
+
+        if (p <= HERO_SPAN) {
+          rawP = Math.max(0, Math.min(1, p / HERO_SPAN));
+          tunnelP = rawP;
+          trackOpacity = smoothstep(0.55, 0.95, rawP);
+          shift = 0;
+        } else if (p <= SECTIONS_END) {
+          tunnelP = 1;
+          trackOpacity = 1;
+          shift = Math.min(p - HERO_SPAN, MAX_SHIFT);
+        } else {
+          const retRaw = Math.min(Math.max((p - SECTIONS_END) / RETURN_SPAN, 0), 1);
+          rawP = 1 - retRaw;
+          tunnelP = rawP;
+          trackOpacity = smoothstep(0.55, 0.95, rawP);
+          shift = MAX_SHIFT;
+        }
+
+        if (warpOverlay) warpOverlay.style.opacity = smoothstep(0.2, 0.95, tunnelP);
+        setHeroOpacity(tunnelP);
+
+        if (sectionsTrackEl) {
+          sectionsTrackEl.style.opacity = trackOpacity;
+          sectionsTrackEl.classList.toggle('is-active', trackOpacity > 0.5);
+          sectionsTrackEl.style.transform = `translateX(-${shift * 100}vw)`;
+        }
+
+        if (soulFixedEl) {
+          soulFixedEl.classList.toggle('is-visible', trackOpacity > 0.05);
+          if (trackOpacity > 0.5) updateSoulState(shift);
+        }
+
+        if (trackOpacity > 0.5 && !story.active) {
+          for (let idx = 0; idx < STORY_ORDER.length; idx++) {
+            const key = STORY_ORDER[idx];
+            if (!story.finished[key] && Math.abs(shift - idx) < 0.5) {
+              startStoryMode(key, idx);
+              break;
+            }
+          }
+        }
+
+        return tunnelP;
+      }
+
+      window.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (story.active) return;
+        targetProgress += e.deltaY * 0.00022;
+        targetProgress = Math.max(targetProgress, 0);
+      }, { passive: false });
+
+      let touchStartY = 0;
+      window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (story.active) return;
+        const deltaY = touchStartY - e.touches[0].clientY;
+        touchStartY = e.touches[0].clientY;
+        targetProgress += deltaY * 0.0009;
+        targetProgress = Math.max(targetProgress, 0);
+      }, { passive: false });
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      let cw = 0, ch = 0;
+
+      function resize() {
+        const dw = Math.round(canvas.clientWidth * dpr);
+        const dh = Math.round(canvas.clientHeight * dpr);
+        if (canvas.width !== dw || canvas.height !== dh) {
+          canvas.width = dw;
+          canvas.height = dh;
+          gl.viewport(0, 0, dw, dh);
+        }
+        cw = dw;
+        ch = dh;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const startTime = performance.now();
+      let rafId = null;
+
+      function render(now) {
+        const elapsed = (now - startTime) / 1000;
+
+        currentMouseX += (targetMouseX - currentMouseX) * 0.08;
+        currentMouseY += (targetMouseY - currentMouseY) * 0.08;
+
+        smoothProgress += (targetProgress - smoothProgress) * 0.06;
+
+        if (smoothProgress >= TOTAL_PROGRESS) {
+          const wraps = Math.floor(smoothProgress / TOTAL_PROGRESS);
+          targetProgress -= wraps * TOTAL_PROGRESS;
+          smoothProgress -= wraps * TOTAL_PROGRESS;
+        }
+
+        const tunnelProgress = applyProgress(smoothProgress);
+
+        if (window.updateWormholeAudio) {
+          window.updateWormholeAudio(tunnelProgress, elapsed);
+        }
+
+        gl.uniform2f(uRes, cw, ch);
+        gl.uniform1f(uTime, elapsed);
+        gl.uniform2f(uMouse, currentMouseX, currentMouseY);
+        gl.uniform1f(uProgress, tunnelProgress);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        rafId = requestAnimationFrame(render);
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cancelAnimationFrame(rafId);
+        else rafId = requestAnimationFrame(render);
+      });
+
+      rafId = requestAnimationFrame(render);
+    })();
+
+    /* Starfield com constelação */
+    function initStarfield(canvasId, dotColor, starCount) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+      let W = 0, H = 0;
+
+      function resizeStarfield() {
+        W = canvas.clientWidth;
+        H = canvas.clientHeight;
+        canvas.width = Math.round(W * DPR);
+        canvas.height = Math.round(H * DPR);
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+      resizeStarfield();
+
+      const STAR_COUNT = starCount || 320;
+      const stars = Array.from({ length: STAR_COUNT }, () => {
+        const hx = Math.random(), hy = Math.random();
+        const isBig = Math.random() < 0.12;
+        return {
+          hx, hy,
+          cx: hx * W, cy: hy * H,
+          vx: 0, vy: 0,
+          r: isBig ? Math.random() * 3.5 + 2.5 : Math.random() * 1.2 + 0.4,
+          a: 1,
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.008 + Math.random() * 0.012
+        };
+      });
+
+      let mouseX = -9999, mouseY = -9999;
+      window.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+      });
+      window.addEventListener('mouseleave', () => { mouseX = -9999; mouseY = -9999; });
+
+      const INFLUENCE = 180;
+      const PULL = 1.1;
+      const SPRING = 0.022;
+      const DAMPING = 0.82;
+      const CONNECT_DIST = 90;
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        for (const s of stars) {
+          const homeX = s.hx * W;
+          const homeY = s.hy * H;
+
+          const dx = mouseX - s.cx;
+          const dy = mouseY - s.cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+          if (dist < INFLUENCE) {
+            const force = (1 - dist / INFLUENCE) * PULL;
+            s.vx += (dx / dist) * force;
+            s.vy += (dy / dist) * force;
+          }
+
+          s.vx += (homeX - s.cx) * SPRING;
+          s.vy += (homeY - s.cy) * SPRING;
+          s.vx *= DAMPING;
+          s.vy *= DAMPING;
+          s.cx += s.vx;
+          s.cy += s.vy;
+          s.pulse += s.pulseSpeed;
+
+          const pulseFactor = 1 + Math.sin(s.pulse) * 0.18;
+          const drawR = s.r * pulseFactor;
+
+          ctx.beginPath();
+          ctx.arc(s.cx, s.cy, drawR, 0, Math.PI * 2);
+          ctx.fillStyle = dotColor(s.a);
+          ctx.fill();
+        }
+
+        // Linhas de constelação entre dots próximos
+        ctx.save();
+        for (let i = 0; i < stars.length; i++) {
+          for (let j = i + 1; j < stars.length; j++) {
+            const a = stars[i], b = stars[j];
+            const dx = a.cx - b.cx, dy = a.cy - b.cy;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < CONNECT_DIST) {
+              const alpha = (1 - d / CONNECT_DIST) * 0.18;
+              ctx.beginPath();
+              ctx.moveTo(a.cx, a.cy);
+              ctx.lineTo(b.cx, b.cy);
+              ctx.strokeStyle = dotColor(alpha);
+              ctx.lineWidth = 0.6;
+              ctx.stroke();
+            }
+          }
+        }
+        ctx.restore();
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resizeStarfield);
+      requestAnimationFrame(draw);
+    }
+
+
+
+    initStarfield('nextStarfield',  (a) => `rgba(0,0,0,${a})`);
+    initStarfield('nextStarfield2', (a) => `rgba(255,255,255,${a})`);
+    initStarfield('nextStarfield3', (a) => `rgba(0,0,0,${a})`);
+    initStarfield('nextStarfield4', (a) => `rgba(255,255,255,${a})`);
+    initStarfield('nextStarfield5', (a) => `rgba(0,0,0,${a})`);
+    initStarfield('nextStarfield6', (a) => `rgba(255,255,255,${a})`);
+    initStarfield('nextStarfield7', (a) => `rgba(0,0,0,${a})`);
+
+  </script>
+</body>
+
+</html>

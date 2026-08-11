@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeroSection from '../components/HeroSection';
+import Loader from '../components/Loader';
+import ScrollEngine from '../components/ScrollEngine';
+import SoulzinhoFixed from '../components/SoulzinhoFixed';
+import StoryUI from '../components/StoryUI';
+import SectionsTrack from '../components/SectionsTrack.astro';
+import AudioEngine from '../components/AudioEngine';
+import CursorGlass from '../components/CursorGlass';
+import { STORY_BEATS } from '../lib/storyBeats';
+---
+
+<Layout title="soul." description="Uma rede social projetada para devolver a sua atenção. Menos algoritmo, mais humano.">
+
+  <script is:inline define:vars={{ beats: STORY_BEATS }}>
+    window.__storyBeats = beats;
+  </script>
+
+  <!-- SVG Filters (inline — sem JS, podem ficar no servidor) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="underwaterWave" x="-40%" y="-40%" width="180%" height="180%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.022" numOctaves="3" seed="7" result="wave">
+          <animate attributeName="baseFrequency" dur="5s"
+            values="0.008 0.022;0.016 0.048;0.008 0.022" repeatCount="indefinite" />
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="wave" scale="12" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+
+      <filter id="negativeSectionWave" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="2" seed="5" result="negWave">
+          <animate attributeName="baseFrequency" dur="4s"
+            values="0.012 0.03;0.02 0.05;0.012 0.03" repeatCount="indefinite" />
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="negWave" scale="6" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <AudioEngine client:load />
+  <CursorGlass client:load />
+
+  <!-- Loader — orquestra a entrada do site -->
+  <Loader client:load />
+
+  <!-- Site principal — começa invisível, o Loader o revela -->
+  <main id="site">
+    <HeroSection client:only="react" />
+    <SoulzinhoFixed client:load />
+    <StoryUI client:load />
+    <SectionsTrack />
+    <ScrollEngine client:load />
+  </main>
+
+</Layout>

@@ -1,0 +1,680 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --bg: #0a0a0c;
+    --fg: #ffffff;
+    --fg-dim: rgba(255, 255, 255, 0.5);
+    --display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body.is-night { --bg: #050506; }
+
+  *, html, body { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    overflow: hidden;
+  }
+
+  /* Oculta cursor nativo em dispositivos de precisão */
+  @media (pointer: fine) {
+    *, html, body,
+    #loader, button, .enter-gate,
+    .hero, .marker, .sound-toggle {
+      cursor: none !important;
+    }
+  }
+}
+
+/* ─── Tailwind theme extension via CSS custom properties ─────────── */
+@theme {
+  --color-soul-bg:      #0a0a0c;
+  --color-soul-night:   #050506;
+  --color-soul-fg:      #ffffff;
+  --color-soul-fg-dim:  rgba(255,255,255,0.5);
+
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ─── LOADER ─────────────────────────────────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1),
+              transform 0.9s ease;
+}
+#loader.is-out {
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+}
+
+.stage-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+}
+
+.enter-gate {
+  z-index: 150;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  font-family: inherit;
+  font-size: 36px;
+  font-weight: 200;
+  letter-spacing: 0.4em;
+  text-transform: lowercase;
+  outline: none;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  padding: 16px 32px 16px calc(32px + 0.4em);
+}
+.enter-gate:hover {
+  color: #ffffff;
+  transform: translate(-50%,-50%) scale(1.04);
+}
+.enter-gate.is-out {
+  opacity: 0;
+  transform: translate(-50%,-50%) scale(0.85);
+  pointer-events: none;
+}
+
+.audio-hint {
+  position: absolute;
+  top: calc(50% + 70px);
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.audio-hint span {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding-left: 0.25em;
+}
+.audio-hint.is-out { opacity: 0; }
+
+/* ─── SCROLL INDICATOR ───────────────────────────────────────────── */
+.scroll-indicator {
+  position: fixed;
+  bottom: 6vh; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 1000;
+}
+.scroll-indicator.is-visible {
+  opacity: 0.5;
+  animation: pulse-scroll 2s cubic-bezier(0.4,0,0.2,1) infinite alternate;
+}
+@keyframes pulse-scroll {
+  0%   { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(12px); }
+}
+.scroll-indicator svg  { width:24px; height:24px; fill:none; stroke:#000; stroke-width:1.5; }
+.scroll-indicator span { font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:#000; font-weight:500; }
+
+/* ─── VIDEO FRAME (loader intro) ─────────────────────────────────── */
+.video-frame {
+  position: relative;
+  z-index: 2;
+  width: min(65vmin, 480px);
+  height: min(65vmin, 480px);
+  overflow: hidden;
+  opacity: 0;
+  background: transparent;
+  transform: translate(-50%,-50%) scale(0.96);
+  transition: opacity 0.7s ease,
+              transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  -webkit-mask-image: radial-gradient(ellipse at center,
+    rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 15%,
+    rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.15) 50%,
+    rgba(0,0,0,0) 68%);
+  mask-image: radial-gradient(ellipse at center,
+    rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 15%,
+    rgba(0,0,0,0.5) 35%, rgba(0,0,0,0.15) 50%,
+    rgba(0,0,0,0) 68%);
+}
+.video-frame.is-in       { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.video-frame.is-zooming video { transform:scale(1.06); transition:transform var(--zoom-duration,4s) linear; }
+.video-frame.is-closing  { opacity:0; transform:translate(-50%,-50%) scale(0.94); transition:opacity 0.6s ease,transform 0.6s ease; }
+.video-frame video       { width:100%; height:100%; object-fit:cover; display:block; }
+
+.tv-overlay {
+  position:absolute; inset:0; pointer-events:none; z-index:5;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.28),rgba(0,0,0,0.28) 1px,transparent 1px,transparent 2px);
+  opacity:0.7;
+}
+#noiseCanvas {
+  position:absolute; inset:0; width:100%; height:100%;
+  pointer-events:none; z-index:4; opacity:0.18; mix-blend-mode:screen;
+}
+
+.brand-stage {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  z-index:6; display:flex; align-items:center; justify-content:center;
+}
+.logo-wrap {
+  opacity:0; transform:scale(0.92); width:120px;
+  transition:opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.logo-wrap.is-in { opacity:1; transform:scale(1); }
+.logo-img { width:100%; display:block; }
+
+/* ─── SITE / HERO ────────────────────────────────────────────────── */
+#site {
+  height:100%; width:100%;
+  display:flex; flex-direction:column;
+  background:var(--bg);
+  opacity:0; transform:scale(0.98);
+  transition:opacity 1s ease 0.2s, transform 1s cubic-bezier(0.16,1,0.3,1) 0.2s;
+}
+#site.is-visible { opacity:1; transform:scale(1); }
+
+.hero {
+  position:relative; height:100%; width:100%;
+  overflow:hidden; background:var(--bg);
+}
+.hero-shader-bg    { position:absolute; inset:0; pointer-events:none; z-index:0; display:block; width:100%; height:100%; }
+.hero-shader-overlay { position:absolute; inset:0; background:rgba(10,10,12,0.45); pointer-events:none; z-index:1; }
+
+/* ─── CURSOR LENTE DE VIDRO ──────────────────────────────────────── */
+.cursor-glass {
+  position:fixed; top:0; left:0;
+  width:6px; height:6px; margin:-3px 0 0 -3px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.65);
+  box-shadow:0 0 8px rgba(255,255,255,0.25), inset 0 0 4px rgba(255,255,255,0.6);
+  backdrop-filter:blur(1.5px) brightness(1.2);
+  -webkit-backdrop-filter:blur(1.5px) brightness(1.2);
+  pointer-events:none !important;
+  z-index:10000; opacity:0;
+  transition:opacity 0.3s ease, transform 0.02s linear;
+  will-change:transform;
+}
+.cursor-glass.is-negative {
+  width:24px; height:24px; margin:-12px 0 0 -12px;
+  background:#ffffff; border:none; box-shadow:none;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  mix-blend-mode:difference;
+  transition:opacity 0.3s ease,
+    width 0.3s cubic-bezier(0.16,1,0.3,1),
+    height 0.3s cubic-bezier(0.16,1,0.3,1),
+    margin 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.cursor-glass.is-visible { opacity:1; }
+
+/* ─── HERO NAV / ACTIONS ─────────────────────────────────────────── */
+.hero-nav    { position:fixed; top:40px; left:48px; z-index:60; mix-blend-mode:difference; }
+.hero-logo   { display:block; width:60px; height:auto; }
+.hero-actions { position:fixed; top:40px; right:48px; z-index:60; display:flex; align-items:center; gap:12px; }
+
+.sound-toggle {
+  display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.22);
+  color:rgba(255,255,255,0.85);
+  padding:0; border-radius:50%;
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:auto; mix-blend-mode:difference;
+}
+.sound-toggle svg       { width:18px; height:18px; display:block; }
+.sound-toggle .icon-muted { display:none; }
+.sound-toggle.is-muted .icon-on    { display:none; }
+.sound-toggle.is-muted .icon-muted { display:block; }
+.sound-toggle:hover     { background:rgba(255,255,255,0.25); color:#ffffff; transform:scale(1.08); }
+.sound-toggle.is-muted  { opacity:0.45; }
+
+/* ─── HERO CONTENT ───────────────────────────────────────────────── */
+.hero-content  { position:absolute; left:48px; bottom:64px; z-index:3; max-width:62%; }
+.hero-eyebrow  { font-family:var(--body); font-style:italic; font-size:13px; font-weight:500; letter-spacing:0.06em; color:var(--fg-dim); text-transform:uppercase; margin-bottom:18px; }
+.hero-headline { font-family:var(--display); font-weight:800; text-transform:uppercase; font-size:clamp(34px,5.4vw,78px); line-height:1.05; letter-spacing:-0.01em; color:var(--fg); }
+
+/* ─── COSMIC MARKERS ─────────────────────────────────────────────── */
+.cosmic-markers { position:absolute; inset:0; pointer-events:none; z-index:2; }
+.milky-way-marker { top:55%; left:65%; }
+.marker {
+  position:absolute; display:flex; align-items:center; gap:12px;
+  opacity:0.7; transition:opacity 0.4s ease; pointer-events:auto;
+}
+.marker:hover { opacity:1 !important; }
+.marker-soulzinho {
+  width:50px; height:auto;
+  filter:drop-shadow(0 0 15px rgba(255,255,255,0.4));
+  animation:soulzinho-float 4s ease-in-out infinite alternate;
+}
+.marker-soulzinho video { width:100%; display:block; }
+.marker-line {
+  width:0px; height:1px;
+  background:rgba(255,255,255,0.4); opacity:0;
+  transition:width 0.4s ease, opacity 0.4s ease;
+}
+.marker-label {
+  font-family:var(--body); font-size:11px; font-weight:500;
+  letter-spacing:0.15em; color:var(--fg); text-transform:uppercase;
+  white-space:nowrap; opacity:0; transform:translateX(-10px);
+  transition:opacity 0.4s ease, transform 0.4s ease;
+}
+.marker:hover .marker-line  { width:60px; opacity:1; }
+.marker:hover .marker-label { opacity:1; transform:translateX(0); }
+.soulzinho-fixed {
+  position:fixed; top:50%; right:8vw;
+  transform:translateY(-50%) translateZ(0); /* força layer própria desde o início */
+  width:clamp(220px,26vw,420px); height:auto;
+  pointer-events:none; opacity:0; z-index:59;
+  animation:soulzinho-float 5s ease-in-out infinite alternate;
+  transition:opacity 0.7s ease;
+}
+.soulzinho-fixed.is-visible { opacity:0.9; }
+
+/* filtro direto no elemento de vídeo, não no wrapper */
+.soul-video-layer {
+  width:100%;
+  display:block;
+  opacity:0; /* fica invisível até .is-ready (primeiro frame já filtrado) */
+  transition:opacity 0.15s linear;
+  filter:grayscale(1) contrast(1000%) invert(1) !important;
+  -webkit-filter:grayscale(1) contrast(1000%) invert(1) !important;
+  will-change:filter;
+  transform:translateZ(0); /* garante composição própria já filtrada */
+  backface-visibility:hidden;
+}
+.soul-video-layer.is-ready { opacity:1; }
+.soul-thought {
+  position:absolute; left:50%; bottom:-30px;
+  transform:translateX(-50%);
+  width:max-content; max-width:220px;
+  text-align:center; font-family:var(--body);
+  font-style:italic; font-weight:400;
+  font-size:12.5px; line-height:1.3;
+  letter-spacing:0.005em; color:rgba(0,0,0,0.55);
+  opacity:0; transition:opacity 0.4s ease;
+  pointer-events:none;
+}
+.soul-thought.is-visible { opacity:1; }
+
+@media (max-width: 900px) {
+  /* O soulzinho flutuante fixo sai de cena no mobile — ele passa a viver
+     como avatarzinho dentro do balão de fala (.story-avatar, ver STORY UI). */
+  .soulzinho-fixed { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .soul-thought { transition-duration:0.01ms !important; }
+  .soulzinho-fixed.is-negative-active { filter:grayscale(1) contrast(1000%) invert(1); }
+}
+
+/* ─── STORY UI ───────────────────────────────────────────────────── */
+.story-ui {
+  position:fixed;
+  right:calc(8vw + clamp(220px,26vw,420px) + 24px);
+  top:50%;
+  width:clamp(260px,24vw,360px);
+  z-index:1000; opacity:0;
+  transform:translateY(-50%) scale(0.95);
+  pointer-events:none;
+  transition:opacity 0.5s ease, transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+.story-ui.is-active { opacity:1; transform:translateY(-50%) scale(1); pointer-events:auto; }
+
+.story-panel {
+  background:rgba(255,255,255,0.96);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border:1.5px solid rgba(0,0,0,0.07);
+  border-radius:22px; padding:22px 24px;
+  cursor:pointer; position:relative;
+}
+.story-panel::after {
+  content:''; position:absolute;
+  right:-13px; top:50%; transform:translateY(-50%);
+  width:14px; height:26px;
+  background:rgba(255,255,255,0.96);
+  clip-path:polygon(0 0,0 100%,100% 50%);
+}
+
+/* Avatarzinho do soulzinho dentro do balão — só existe visualmente no mobile,
+   onde o soulzinho-fixed flutuante é escondido (ver seção MOBILE acima). */
+.story-avatar { display: none; }
+
+.story-text { font-family:var(--body); font-size:15.5px; line-height:1.5; font-weight:500; color:#000; min-height:1.5em; }
+.story-text.is-comment { font-style:italic; font-weight:400; color:rgba(0,0,0,0.6); font-size:14px; }
+
+.story-caret {
+  display:inline-block; width:2px; height:0.95em;
+  background:currentColor; margin-left:2px;
+  vertical-align:-0.1em; opacity:0;
+  animation:story-caret-blink 0.9s steps(1) infinite;
+}
+.story-caret.is-visible { opacity:1; }
+@keyframes story-caret-blink { 50% { opacity:0; } }
+
+.story-controls {
+  display:flex; justify-content:flex-end; gap:8px;
+  margin-top:16px; opacity:0; transform:translateY(6px);
+  pointer-events:none; transition:opacity 0.35s ease, transform 0.35s ease;
+}
+.story-controls.is-visible { opacity:1; transform:translateY(0); pointer-events:auto; }
+
+.story-auto-btn {
+  display:inline-flex; align-items:center;
+  background:transparent; color:rgba(0,0,0,0.4);
+  border:1.5px solid rgba(0,0,0,0.15);
+  border-radius:999px; padding:0 16px;
+  font-family:var(--body); font-size:11px; font-weight:600;
+  letter-spacing:0.08em; text-transform:uppercase;
+  cursor:pointer; transition:all 0.25s ease;
+}
+.story-auto-btn:hover    { color:#000; border-color:rgba(0,0,0,0.4); }
+.story-auto-btn.is-active { background:#000; color:#fff; border-color:#000; }
+
+.story-continue-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#000; color:#fff; border:none;
+  border-radius:999px; padding:11px 22px;
+  font-family:var(--body); font-size:12.5px; font-weight:600;
+  letter-spacing:0.09em; text-transform:uppercase;
+  cursor:pointer; transition:background 0.25s ease;
+}
+.story-continue-btn:hover         { background:#262626; }
+.story-continue-btn:focus-visible { outline:2px solid #000; outline-offset:3px; }
+
+.sr-only {
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+.story-reveal { opacity:0; transform:translateY(14px); transition:opacity 0.6s ease,transform 0.6s ease; }
+.story-reveal.is-revealed { opacity:1 !important; transform:translateY(0) !important; visibility: visible !important; }
+
+@media (max-width: 900px) {
+  .story-ui {
+    left:16px; right:16px; width:auto;
+    bottom:4vh; top:auto;
+    transform:translateY(14px) scale(0.95);
+  }
+  .story-ui.is-active { transform:translateY(0) scale(1); }
+  .story-panel::after {
+    right:40px; top:auto; bottom:-12px; transform:none;
+    width:24px; height:12px;
+    clip-path:polygon(0 0,100% 0,50% 100%);
+  }
+  .story-panel { padding:16px 18px 16px 62px; }
+  .story-continue-btn { width:100%; justify-content:center; padding:13px 22px; }
+
+  /* Avatarzinho do soulzinho, tipo chat, no canto do balão */
+  .story-avatar {
+    display: block;
+    position: absolute;
+    left: 16px; top: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #000;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    animation: soulzinho-float 4s ease-in-out infinite alternate;
+  }
+  .story-avatar video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1000%) invert(1);
+    -webkit-filter: grayscale(1) contrast(1000%) invert(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-ui, .story-continue-btn, .story-reveal { transition-duration:0.01ms !important; }
+  .story-caret { animation:none; opacity:0; }
+  .story-panel.is-negative-active { filter:none; }
+}
+
+/* ─── SOULZINHO FLOAT KEYFRAME ───────────────────────────────────── */
+@keyframes soulzinho-float {
+  0%   { transform:translateY(-3px); }
+  100% { transform:translateY(3px); }
+}
+
+/* ─── WARP OVERLAY ───────────────────────────────────────────────── */
+.warp-overlay {
+  position:fixed; inset:0; background:#ffffff;
+  opacity:0; pointer-events:none; z-index:40;
+}
+
+/* ─── SECTIONS TRACK ─────────────────────────────────────────────── */
+.sections-track {
+  position:fixed; inset:0; z-index:45;
+  display:flex; flex-direction:row; align-items:stretch;
+  height:100%; width:700vw;
+  opacity:0; pointer-events:none;
+}
+.sections-track.is-active { pointer-events:auto; }
+
+.next-section {
+  position:relative; flex:0 0 100vw; width:100vw; height:100%;
+  background:#ffffff; color:#000;
+  overflow-y:auto; overflow-x:hidden;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+  padding:112px 48px 48px;
+  display:flex; flex-direction:column; justify-content:flex-start;
+  gap:40px; scrollbar-width:none; -ms-overflow-style:none;
+}
+.next-section::-webkit-scrollbar { display:none; }
+.next-starfield { display:none; }
+
+/* ─── SWISS EDITORIAL ────────────────────────────────────────────── */
+.swiss-body { position:relative; z-index:1; max-width:820px; margin:16px 0; display:flex; flex-direction:column; gap:28px; }
+
+.next-section.is-current-section,
+body.in-white-section .story-panel,
+body.in-white-section .hero-nav,
+body.in-white-section .soulzinho-fixed {
+  filter: url(#underwaterWave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-section.is-current-section,
+  body.in-white-section .story-panel,
+  body.in-white-section .hero-nav,
+  body.in-white-section .soulzinho-fixed {
+    filter: none;
+  }
+}
+
+.swiss-stats-grid  { display:grid; grid-template-columns:repeat(2,1fr); gap:40px; margin:8px 0 16px; }
+.swiss-stat-item   { display:flex; flex-direction:column; gap:8px; }
+.swiss-stat-num    { font-size:clamp(48px,6vw,96px); font-weight:800; letter-spacing:-0.04em; line-height:0.9; }
+.swiss-stat-label  { font-size:clamp(14px,1.3vw,17px); font-weight:400; color:rgba(0,0,0,0.7); line-height:1.25; }
+.swiss-paragraph   { font-size:clamp(18px,2vw,28px); line-height:1.35; font-weight:400; letter-spacing:-0.02em; color:#000; }
+.swiss-source      { font-size:12px; font-weight:500; color:rgba(0,0,0,0.45); text-transform:uppercase; letter-spacing:0.04em; margin-top:-12px; }
+.swiss-question    { font-size:clamp(20px,2.4vw,32px); font-weight:600; letter-spacing:-0.02em; margin-top:8px; }
+
+@media (max-width: 768px) {
+  .next-section { padding:96px 20px 24px; }
+  .swiss-stats-grid { grid-template-columns:1fr; gap:20px; }
+}
+
+.next-section.section-negative     { background:#000; color:#fff; }
+.section-negative .swiss-stat-label { color:rgba(255,255,255,0.65); }
+.section-negative .swiss-paragraph  { color:#fff; }
+.section-negative .swiss-source     { color:rgba(255,255,255,0.45); }
+.section-negative .swiss-question   { color:#fff; }
+
+.swiss-headline {
+  font-family:var(--display); font-weight:800; text-transform:uppercase;
+  font-size:clamp(26px,3.6vw,50px); line-height:1.08;
+  letter-spacing:-0.015em; max-width:780px;
+}
+.swiss-concept-grid  { display:grid; grid-template-columns:repeat(2,1fr); gap:32px 48px; margin:8px 0 16px; }
+.swiss-concept-item  { display:flex; flex-direction:column; gap:8px; }
+.swiss-concept-title {
+  font-family:var(--display); font-weight:800; text-transform:uppercase;
+  font-size:clamp(20px,2.1vw,28px); letter-spacing:-0.02em; line-height:1.05;
+}
+.swiss-concept-text { font-size:clamp(14px,1.3vw,17px); font-weight:400; line-height:1.3; color:rgba(0,0,0,0.68); }
+.section-negative .swiss-concept-text { color:rgba(255,255,255,0.68); }
+
+@media (max-width: 900px) { .swiss-concept-grid { grid-template-columns:1fr; gap:24px; } }
+
+.swiss-footer-body   { justify-content:space-between; height:100%; flex:1; }
+.swiss-footer-bottom { display:flex; flex-direction:column; gap:10px; padding-top:24px; margin-top:auto; }
+.swiss-footer-slogan  { font-size:clamp(14px,1.4vw,17px); font-weight:600; letter-spacing:-0.01em; color:rgba(0,0,0,0.75); }
+.swiss-footer-credits { font-size:12px; line-height:1.6; color:rgba(0,0,0,0.4); border-top:1px solid rgba(0,0,0,0.12); padding-top:14px; }
+/* ─── FASE 7: POLISH & RESPONSIVIDADE ────────────────────────────── */
+
+/* Safe area para notch/dynamic island */
+.hero-nav    { top: max(40px, env(safe-area-inset-top, 40px)); left: max(48px, env(safe-area-inset-left, 48px)); }
+.hero-actions { top: max(40px, env(safe-area-inset-top, 40px)); right: max(48px, env(safe-area-inset-right, 48px)); }
+
+/* ─── MOBILE PEQUENO (<480px) */
+@media (max-width: 480px) {
+  .enter-gate { font-size: 26px; letter-spacing: 0.3em; padding: 12px 24px 12px calc(24px + 0.3em); }
+  .audio-hint { font-size: 9px; gap: 6px; }
+  .hero-nav    { left: 20px; }
+  .hero-actions { right: 20px; }
+  .hero-content { left: 20px; right: 20px; bottom: 48px; max-width: 100%; }
+  .hero-eyebrow { font-size: 10px; }
+  .milky-way-marker { left: 55%; top: 45%; }
+  .marker-soulzinho { width: 38px; }
+  .soulzinho-fixed { display: none; }
+  .story-ui { left: 12px; right: 12px; }
+  .next-section { padding: 80px 16px 20px; }
+  .swiss-stats-grid { grid-template-columns: 1fr; gap: 16px; }
+  .swiss-concept-grid { grid-template-columns: 1fr; gap: 16px; }
+  .video-frame { width: min(85vmin, 340px); height: min(85vmin, 340px); }
+}
+
+/* ─── MOBILE GRANDE / LANDSCAPE (481–768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .hero-content  { left: 32px; bottom: 56px; max-width: 85%; }
+  .hero-nav      { left: 32px; }
+  .hero-actions  { right: 32px; }
+  .next-section  { padding: 88px 28px 28px; }
+}
+
+/* ─── LANDSCAPE MÓVEL — oculta soulzinho pra não cobrir conteúdo */
+@media (max-height: 500px) and (orientation: landscape) {
+  .soulzinho-fixed { display: none; }
+  .story-ui { bottom: 2vh; top: auto; left: 16px; right: 16px; width: auto; }
+  .hero-content { bottom: 24px; }
+}
+
+/* ─── TABLET RETRATO (769–1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero-content  { max-width: 70%; }
+  .soulzinho-fixed { width: clamp(160px, 24vw, 280px); right: 4vw; }
+  .story-ui {
+    right: calc(4vw + clamp(160px,24vw,280px) + 16px);
+    width: clamp(220px, 22vw, 320px);
+  }
+  .next-section { padding: 100px 36px 36px; }
+}
+
+/* ─── DESKTOP GRANDE (>1400px) */
+@media (min-width: 1400px) {
+  .hero-content  { left: 80px; bottom: 80px; }
+  .hero-nav      { left: 80px; top: 56px; }
+  .hero-actions  { right: 80px; top: 56px; }
+  .next-section  { padding: 120px 80px 60px; }
+  .swiss-stat-num { font-size: clamp(72px, 7vw, 120px); }
+}
+
+/* ─── will-change: apenas onde há animação ativa ─────────────────── */
+/* Removemos will-change do sections-track (era premature opt.) */
+.sections-track  { will-change: transform; } /* só transform, não opacity */
+.cursor-glass    { will-change: transform; }
+.warp-overlay    { will-change: opacity; }
+/* Soulzinho: só quando visível */
+.soulzinho-fixed.is-visible { will-change: transform; }
+
+/* ─── prefers-reduced-motion: cobertura total ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Para toda animação/transição exceto opacidade */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Permite fade-in puro (opacidade) — não causa motion sickness */
+  .story-ui, #site, #loader { transition-duration: 0.4s !important; }
+
+  /* WebGL / parallax: canvas fica estático (HeroShader já trata no TS) */
+  canvas#shaderBg { opacity: 0.4; }
+
+  /* Desativa soulzinho float */
+  .marker-soulzinho, .soulzinho-fixed { animation: none !important; }
+
+  /* Desativa filtro ripple/water */
+  #nextSection .swiss-body *:hover { filter: none !important; }
+  .story-panel.is-negative-active   { filter: none !important; }
+
+  /* Grain canvas: oculto (Loader.tsx já não desenha em reduced) */
+  #noiseCanvas { display: none; }
+
+  /* Scroll-jacking: scroll indicator sem pulsar */
+  .scroll-indicator.is-visible { animation: none !important; opacity: 0.4; }
+
+  /* Cursor glass: desativa */
+  .cursor-glass { display: none !important; }
+
+  /* Seções track: sem transformações pesadas */
+  .sections-track { will-change: auto; }
+  .warp-overlay   { will-change: auto; }
+}
+
+/* ─── TOUCH: remove hover states que travam em iOS ──────────────── */
+@media (hover: none) {
+  .enter-gate:hover { transform: translate(-50%,-50%) !important; }
+  .sound-toggle:hover { transform: none !important; }
+  .marker:hover .marker-line  { width: 0; opacity: 0; }
+  .marker:hover .marker-label { opacity: 0; transform: translateX(-10px); }
+  .cursor-glass { display: none !important; }
+}
+
+/* ─── Scrollbar: seções internas (não-WebKit já usa scrollbar-width:none) */
+.next-section::-webkit-scrollbar { display: none; }
+
+/* ─── Focus visible: acessibilidade de teclado ──────────────────── */
+.enter-gate:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.6);
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+.sound-toggle:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.6);
+  outline-offset: 3px;
+}
+
+/* ─── Video frame: mobile menor */
+@media (max-width: 480px) {
+  .video-frame {
+    width: min(88vmin, 320px);
+    height: min(88vmin, 320px);
+  }
+}

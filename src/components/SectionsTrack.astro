@@ -1,0 +1,290 @@
+---
+// SectionsTrack.astro — HTML estático das 7 seções migrado para React
+import SwissSection from './SwissSection';
+import StatBlock from './StatBlock';
+import ConceptGrid from './ConceptGrid';
+---
+<div class="sections-track" id="sectionsTrack">
+  
+  <SwissSection id="nextSection" canvasId="nextStarfield">
+    <StatBlock revealKey="stats" stats={[
+      { target: '553', format: 'hm', startLabel: '9h13', label: 'por dia conectados à internet' },
+      { target: '217', format: 'hm', startLabel: '3h37', label: 'só em redes sociais, todo dia' }
+    ]} />
+    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+      Você já abriu o celular só para ver "uma coisa rapidinho" e saiu de lá quarenta minutos depois, sem saber bem
+      o que viu, nem por que ainda estava lá? Isso é tão comum que a gente parou de estranhar. Mas os números
+      mostram o tamanho real disso: o Brasil está entre os países com maior tempo médio diário conectado à internet
+      do mundo, e parte relevante desse tempo resulta de decisões de design: feed algorítmico, notificações push e
+      rolagem infinita são desenvolvidos para maximizar o tempo de permanência do usuário na plataforma.
+    </p>
+    <p class="swiss-source story-reveal" data-story-reveal="context">
+      fonte: Digital 2024: Brazil, We Are Social & Meltwater · conceito de design persuasivo: Tristan Harris,
+      ex-design ethicist do Google, "How Technology Hijacks People's Minds" (2016)
+    </p>
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se uma rede social fosse feita para te devolver o seu tempo, em vez de tomar ele de você?
+    </p>
+  </SwissSection>
+
+  <SwissSection id="nextSection2" canvasId="nextStarfield2">
+    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">
+      não é falta de força de vontade.<br>é design feito pra te prender.
+    </h2>
+    <p class="swiss-paragraph story-reveal" data-story-reveal="mechanism">
+      Em 1930, Skinner descobriu que recompensa imprevisível vicia mais do que recompensa certa.
+      É exatamente isso que acontece quando você desliza o dedo: às vezes tem algo bom, às vezes não.
+      Você não consegue parar porque seu cérebro está esperando a próxima surpresa.
+      A alavanca é o seu polegar. A máquina caça-níquel é o seu celular.
+    </p>
+    <ConceptGrid revealKey="concepts" concepts={[
+      { title: 'paginação', text: 'o conteúdo tem fim definido, em vez de rolagem infinita, um dos mecanismos mais associados ao uso compulsivo de redes sociais.' },
+      { title: 'tela de intenção', text: 'separa o que o usuário deseja fazer do que a plataforma prioriza mostrar.' },
+      { title: 'ferramenta, não mestre', text: 'sem notificações desenhadas para gerar retorno automático ao aplicativo.' },
+      { title: 'foco protegido', text: 'sem mecanismos de recompensa variável, o mesmo princípio usado em caça-níqueis.' }
+    ]} />
+    <p class="swiss-source story-reveal" data-story-reveal="source">
+      base conceitual: B. F. Skinner, reforço de razão variável (1930); Harris (2016), "FOMSI"
+    </p>
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se a tecnologia devolvesse o controle ao usuário?
+    </p>
+  </SwissSection>
+
+  <SwissSection id="nextSection3" canvasId="nextStarfield3">
+    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">estímulo em alta velocidade, atenção em queda.</h2>
+    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+      Em 2024, um termo virou palavra do ano em vários dicionários: Brain Rot, o desgaste cognitivo do consumo
+      excessivo de conteúdo curto e rápido, associado a menor concentração, memória mais fraca e menos tolerância
+      para tarefas longas. O córtex pré-frontal, região ligada a foco e autocontrole, é a mais afetada por esse
+      padrão de estímulo constante. Pesquisadores descrevem um padrão em duas fases: no início, o uso é por prazer;
+      com o tempo, ele passa a ser fuga. Da ansiedade, do tédio, da solidão.
+    </p>
+    <p class="swiss-source story-reveal" data-story-reveal="context">
+      fonte: "Brain Rot", termo do ano (2024); dupla via de reforço, Jingsong Wang e Shen Wang; Harris (2016)
+    </p>
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se publicar exigisse uma pausa, em vez de um impulso?
+    </p>
+    <ConceptGrid revealKey="concept" singleColumn={true} concepts={[
+      { title: 'qual a intenção desta publicação?', text: 'antes de postar, o soul pergunta. um segundo de pausa tira o cérebro do piloto automático.' }
+    ]} />
+  </SwissSection>
+
+  <SwissSection id="nextSection4" canvasId="nextStarfield4">
+    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">o vídeo espera por você. não o contrário.</h2>
+    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+      Um estudo com mais de 7.600 adolescentes mostrou que não é o tempo conectado que machuca.
+      É como esse tempo é usado. Criar e interagir traz bem-estar. Rolar o feed e se comparar traz ansiedade.
+      A diferença entre usar e ser usado cabe numa decisão simples: quem aperta o play?
+    </p>
+    <p class="swiss-source story-reveal" data-story-reveal="context">
+      fonte: HBSC / Organização Mundial da Saúde (2023), 7.643 adolescentes
+    </p>
+    <ConceptGrid revealKey="concepts" concepts={[
+      { title: 'play manual', text: 'sem autoplay conduzindo automaticamente ao próximo vídeo.' },
+      { title: 'miniatura honesta', text: 'o conteúdo é identificável antes de o usuário decidir assistir.' },
+      { title: 'duração visível', text: 'tempo de reprodução exibido previamente, sem estimativa oculta.' },
+      { title: 'soults', text: 'o formato curto é mantido, mas a decisão de assistir permanece do usuário.' }
+    ]} />
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se o conteúdo esperasse a decisão do usuário, em vez de antecipá-la?
+    </p>
+  </SwissSection>
+
+  <SwissSection id="nextSection5" canvasId="nextStarfield5">
+    <StatBlock revealKey="stats" singleColumn={true} stats={[
+      { target: '6', format: 'suffix', suffix: 'x', startLabel: '6x', label: 'mais rápido informações falsas se espalham do que informações verdadeiras nas redes sociais' }
+    ]} />
+    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+      Quando cada pessoa vê um feed diferente, moldado por critérios de engajamento, forma-se uma fragmentação da
+      experiência informacional: bolhas que dificultam um ponto de referência comum entre os usuários. O que é
+      falso costuma ser mais novo, mais chocante, mais emocional, e o algoritmo que decide o que você vê tende a
+      priorizar isso. Em 2025, quase metade dos adolescentes americanos (48%) já diz achar que redes sociais fazem
+      mal para pessoas da idade deles, um salto em relação aos 32% registrados em 2022.
+    </p>
+    <p class="swiss-source story-reveal" data-story-reveal="context">
+      fonte: Vosoughi, Roy & Aral, "The Spread of True and False News Online", Science (2018) · Pew Research Center (2025)
+    </p>
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se a linha do tempo voltasse a ser a mesma para todos?
+    </p>
+    <ConceptGrid revealKey="concept" singleColumn={true} concepts={[
+      { title: 'feed 100% cronológico', text: 'a ordem de exibição não é definida por um algoritmo de recomendação, mas pela sequência temporal das publicações, um modelo comparável ao adotado pela Wikipédia.' }
+    ]} />
+  </SwissSection>
+
+  <SwissSection id="nextSection6" canvasId="nextStarfield6">
+    <h2 class="swiss-headline story-reveal" data-story-reveal="headline">quando é grátis, você costuma ser o produto.</h2>
+    <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+      Quanto mais tempo você passa na plataforma, mais ela aprende sobre você.
+      Esse aprendizado vira propaganda. Essa propaganda vira receita.
+      Shoshana Zuboff chama isso de capitalismo de vigilância: seu comportamento como matéria-prima.
+      Não é teoria de conspiração. É o modelo de negócio.
+    </p>
+    <ConceptGrid revealKey="concepts" concepts={[
+      { title: 'sem login social', text: 'o cadastro via Google ou Facebook vincula o uso da plataforma a dados já coletados por terceiros. o cadastro é feito de forma independente.' },
+      { title: 'sem perfil comportamental comercializável', text: 'não há construção de perfil de comportamento destinado à venda para anunciantes.' },
+      { title: 'sem rastreamento silencioso', text: 'a navegação do usuário não é convertida em dado sem seu conhecimento.' },
+      { title: 'dado do usuário, controle do usuário', text: 'o que é compartilhado, e com quem, é uma decisão do usuário.' }
+    ]} />
+    <p class="swiss-question story-reveal" data-story-reveal="question">
+      e se a privacidade fosse padrão, não uma opção paga?
+    </p>
+  </SwissSection>
+
+  <SwissSection id="nextSection7" canvasId="nextStarfield7" isFooter={true}>
+    <div class="swiss-footer-top">
+      <h2 class="swiss-headline story-reveal" data-story-reveal="headline">métricas de popularidade não equivalem a conexão real.</h2>
+      <p class="swiss-paragraph story-reveal" data-story-reveal="context">
+        Contagem de curtidas, número de seguidores e visualizações têm sido associadas, em estudos de bem-estar
+        digital, ao uso dessas métricas como parâmetro de autoestima, particularmente entre usuários mais jovens,
+        com impacto relatado sobre ansiedade e autoimagem.
+      </p>
+      <p class="swiss-question story-reveal" data-story-reveal="question">
+        e se o indicador relevante fosse outro?
+      </p>
+      <ConceptGrid revealKey="concepts" concepts={[
+        { title: 'amigos reais', text: 'o perfil evidencia conexões próximas, não a quantidade de interações públicas recebidas.' },
+        { title: 'pausas intencionais', text: 'a bio permite indicar períodos de ausência proposital: reconectar com a vida offline também faz parte da proposta.' }
+      ]} />
+    </div>
+    <div class="swiss-footer-bottom story-reveal" data-story-reveal="footer">
+      <p class="swiss-paragraph swiss-footer-manifest">
+        O jeito como a gente usa redes sociais hoje não é normal. A gente só se acostumou tanto com isso, que parou
+        de perceber. O soul não promete resolver tudo isso sozinho. Mas promete uma coisa: nunca vai lucrar em cima
+        do seu tempo perdido.
+      </p>
+      <p class="swiss-footer-slogan">soul. menos algoritmo, mais humano.</p>
+      <p class="swiss-footer-credits">
+        projeto desenvolvido por Brendo Reis e equipe no Curso Técnico de Sistemas, SENAI Anchieta, 2026.
+      </p>
+    </div>
+  </SwissSection>
+
+</div>
+
+<script>
+  /* Starfield com constelação (client-side script nativo Astro) */
+  function initStarfield(canvasId: string, dotColor: (a: number) => string, starCount?: number) {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0;
+
+    function resizeStarfield() {
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
+      ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    resizeStarfield();
+
+    const STAR_COUNT = starCount || 320;
+    const stars = Array.from({ length: STAR_COUNT }, () => {
+      const hx = Math.random(), hy = Math.random();
+      const isBig = Math.random() < 0.12;
+      return {
+        hx, hy,
+        cx: hx * W, cy: hy * H,
+        vx: 0, vy: 0,
+        r: isBig ? Math.random() * 3.5 + 2.5 : Math.random() * 1.2 + 0.4,
+        a: 1,
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.008 + Math.random() * 0.012
+      };
+    });
+
+    let mouseX = -9999, mouseY = -9999;
+    window.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+    window.addEventListener('mouseleave', () => { mouseX = -9999; mouseY = -9999; });
+
+    const INFLUENCE = 180;
+    const PULL = 1.1;
+    const SPRING = 0.022;
+    const DAMPING = 0.82;
+    const CONNECT_DIST = 90;
+    let rafId = 0;
+
+    function draw() {
+      ctx!.clearRect(0, 0, W, H);
+
+      for (const s of stars) {
+        const homeX = s.hx * W;
+        const homeY = s.hy * H;
+
+        const dx = mouseX - s.cx;
+        const dy = mouseY - s.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+        if (dist < INFLUENCE) {
+          const force = (1 - dist / INFLUENCE) * PULL;
+          s.vx += (dx / dist) * force;
+          s.vy += (dy / dist) * force;
+        }
+
+        s.vx += (homeX - s.cx) * SPRING;
+        s.vy += (homeY - s.cy) * SPRING;
+        s.vx *= DAMPING;
+        s.vy *= DAMPING;
+        s.cx += s.vx;
+        s.cy += s.vy;
+        s.pulse += s.pulseSpeed;
+
+        const pulseFactor = 1 + Math.sin(s.pulse) * 0.18;
+        const drawR = s.r * pulseFactor;
+
+        ctx!.beginPath();
+        ctx!.arc(s.cx, s.cy, drawR, 0, Math.PI * 2);
+        ctx!.fillStyle = dotColor(s.a);
+        ctx!.fill();
+      }
+
+      ctx!.save();
+      for (let i = 0; i < stars.length; i++) {
+        for (let j = i + 1; j < stars.length; j++) {
+          const a = stars[i], b = stars[j];
+          const dx = a.cx - b.cx, dy = a.cy - b.cy;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < CONNECT_DIST) {
+            const alpha = (1 - d / CONNECT_DIST) * 0.18;
+            ctx!.beginPath();
+            ctx!.moveTo(a.cx, a.cy);
+            ctx!.lineTo(b.cx, b.cy);
+            ctx!.strokeStyle = dotColor(alpha);
+            ctx!.lineWidth = 0.6;
+            ctx!.stroke();
+          }
+        }
+      }
+      ctx!.restore();
+
+      rafId = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resizeStarfield);
+    rafId = requestAnimationFrame(draw);
+    
+    // Pausa no visibilitychange
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) cancelAnimationFrame(rafId);
+      else rafId = requestAnimationFrame(draw);
+    });
+  }
+
+  // Init
+  initStarfield('nextStarfield',  (a) => `rgba(0,0,0,${a})`);
+  initStarfield('nextStarfield2', (a) => `rgba(255,255,255,${a})`);
+  initStarfield('nextStarfield3', (a) => `rgba(0,0,0,${a})`);
+  initStarfield('nextStarfield4', (a) => `rgba(255,255,255,${a})`);
+  initStarfield('nextStarfield5', (a) => `rgba(0,0,0,${a})`);
+  initStarfield('nextStarfield6', (a) => `rgba(255,255,255,${a})`);
+  initStarfield('nextStarfield7', (a) => `rgba(0,0,0,${a})`);
+</script>
