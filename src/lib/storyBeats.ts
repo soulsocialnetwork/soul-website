@@ -48,8 +48,8 @@ export const STORY_BEATS: Record<string, Beat[]> = {
   ],
   s7: [
     { type: 'comment', text: '"ei, antes de você fechar essa aba... olha pro lado. tem gente de verdade esperando por você."' },
-    { type: 'comment', text: '"a vida boa não manda notificação. ela só acontece — e cada segundo importa."' },
-    { type: 'comment', text: '"ainda há tempo. eu, de fantasma pra gente viva: levanta os olhos."' },
-    { type: 'comment', text: '"valeu por chegar até aqui comigo. essa jornada, aliás, ainda nem terminou."' },
+    { type: 'comment', text: '"a vida boa não manda notificação. ela só acontece — e cada segundo importa."', reveal: 'context' },
+    { type: 'comment', text: '"ainda há tempo. eu, de fantasma pra gente viva: levanta os olhos."', reveal: 'context2' },
+    { type: 'comment', text: '"valeu por chegar até aqui comigo. essa jornada, aliás, ainda nem terminou."', reveal: 'footer' },
   ],
 };

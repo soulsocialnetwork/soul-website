@@ -54,6 +54,11 @@ function applyScrollDelta(
       return Math.max(0, currentProgress + delta);
     }
 
+    // seção 07: deixa entrar no retorno ao hero
+    if (delta > 0 && shift >= MAX_SHIFT - SHIFT_EPS) {
+      return currentProgress + delta;
+    }
+
     const newShift = clampShiftDelta(shift, delta);
     return HERO_SPAN + newShift;
   }
@@ -79,6 +84,10 @@ function applyScrollDelta(
 
 function shiftToSectionIndex(shift: number): number {
   return Math.max(0, Math.min(SECTION_IDS.length - 1, Math.floor(shift + 1e-9)));
+}
+
+function isSection7Arrived(shift: number): boolean {
+  return shift >= MAX_SHIFT - SHIFT_EPS;
 }
 
 export default function ScrollEngine() {
@@ -179,6 +188,10 @@ export default function ScrollEngine() {
         sectionsTrackEl.style.transform = `translate3d(-${shift * 100}vw, 0, 0)`;
       }
 
+      const section7El = sectionEls[SECTION_IDS.length - 1];
+      const section7Arrived = isSection7Arrived(shift);
+      section7El?.classList.toggle('is-section-ready', section7Arrived);
+
       const isWhiteSection = true;
 
       if (trackOpacity > 0.05) {
@@ -203,6 +216,7 @@ export default function ScrollEngine() {
         for (let idx = 0; idx < STORY_ORDER.length; idx++) {
           const key = STORY_ORDER[idx];
           if (!finishedKeys[key] && idx === activeIdx) {
+            if (idx === STORY_ORDER.length - 1 && !section7Arrived) break;
             const started = (window as any).__startStoryMode?.(key, idx);
             if (started !== false) finishedKeys[key] = true;
             break;
@@ -282,7 +296,7 @@ export default function ScrollEngine() {
       delete (window as any).__lockScroll;
       delete (window as any).__unlockScroll;
 
-      sectionEls.forEach(el => el?.classList.remove('is-current-section'));
+      sectionEls.forEach(el => el?.classList.remove('is-current-section', 'is-section-ready'));
     };
   }, []);
 
