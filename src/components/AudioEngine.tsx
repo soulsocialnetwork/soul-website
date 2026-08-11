@@ -13,18 +13,37 @@ export default function AudioEngine() {
 
   useEffect(() => {
     let isMuted = false;
-    // Track tunnel state to fire wind burst exactly once on exit
     let wasInTunnel = false;
 
-    function getAudioCtx(): AudioContext {
+    /** Cria/resume o AudioContext — seguro após gesto do usuário. */
+    function ensureUnlocked(): AudioContext {
       if (!ctxRef.current) {
         ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        bgMusicRef.current?.load();
+        shuaAudioRef.current?.load();
       }
       if (ctxRef.current.state === 'suspended') ctxRef.current.resume();
       return ctxRef.current;
     }
 
-    /* ── Global controls ──────────────────────────────────────────── */
+    /** Retorna ctx só se já desbloqueado (ex.: hover antes de qualquer clique). */
+    function getAudioCtxIfReady(): AudioContext | null {
+      if (!ctxRef.current) return null;
+      if (ctxRef.current.state === 'suspended') ctxRef.current.resume();
+      return ctxRef.current;
+    }
+
+    const onFirstInteraction = () => {
+      ensureUnlocked();
+      document.removeEventListener('click', onFirstInteraction, true);
+      document.removeEventListener('touchstart', onFirstInteraction, true);
+      document.removeEventListener('keydown', onFirstInteraction, true);
+    };
+
+    document.addEventListener('click', onFirstInteraction, true);
+    document.addEventListener('touchstart', onFirstInteraction, true);
+    document.addEventListener('keydown', onFirstInteraction, true);
+
     (window as any).__toggleMute = () => {
       isMuted = !isMuted;
       if (bgMusicRef.current)  bgMusicRef.current.muted  = isMuted;
@@ -33,9 +52,8 @@ export default function AudioEngine() {
     };
     (window as any).__getIsMuted = () => isMuted;
 
-    /* ── Web Audio node graph ─────────────────────────────────────── */
     function initAudioNodes() {
-      const ctx = getAudioCtx();
+      const ctx = ensureUnlocked();
       if (!bgFilterRef.current && bgMusicRef.current) {
         try {
           const src = ctx.createMediaElementSource(bgMusicRef.current);
@@ -56,11 +74,10 @@ export default function AudioEngine() {
       }
     }
 
-    /* ── Wind burst — pure synthesis, no external file ───────────── */
     function playWindBurst() {
       if (isMuted) return;
       try {
-        const ctx      = getAudioCtx();
+        const ctx      = ensureUnlocked();
         const duration = 2.0;
         const frames   = Math.ceil(ctx.sampleRate * duration);
         const buffer   = ctx.createBuffer(1, frames, ctx.sampleRate);
@@ -70,13 +87,11 @@ export default function AudioEngine() {
         const src = ctx.createBufferSource();
         src.buffer = buffer;
 
-        // Bandpass centred on ~800 Hz for a wind-like timbre
         const bp = ctx.createBiquadFilter();
         bp.type = 'bandpass';
         bp.frequency.value = 800;
         bp.Q.value = 0.7;
 
-        // Soft high-shelf cut
         const shelf = ctx.createBiquadFilter();
         shelf.type = 'highshelf';
         shelf.frequency.value = 4000;
@@ -85,8 +100,8 @@ export default function AudioEngine() {
         const gain = ctx.createGain();
         const now  = ctx.currentTime;
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.18, now + 0.3);        // swell in
-        gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // fade out
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         src.connect(bp).connect(shelf).connect(gain).connect(ctx.destination);
         src.start(now);
@@ -94,9 +109,9 @@ export default function AudioEngine() {
       } catch(_) {}
     }
 
-    /* ── Background music ─────────────────────────────────────────── */
     (window as any).__playBackgroundMusic = () => {
       if (!bgMusicRef.current) return;
+      ensureUnlocked();
       bgMusicRef.current.volume = 0;
       bgMusicRef.current.play()
         .then(() => {
@@ -111,21 +126,18 @@ export default function AudioEngine() {
         .catch(() => {});
     };
 
-    /* ── Wormhole / tunnel audio ──────────────────────────────────── */
     (window as any).updateWormholeAudio = (progress: number, elapsed: number) => {
       if (!bgMusicRef.current || !shuaAudioRef.current) return;
-      const ctx = getAudioCtx();
+      const ctx = ensureUnlocked();
       initAudioNodes();
 
       const inTunnel = progress > 0.02 && progress < 0.98;
 
-      // Fire wind burst exactly once when returning from tunnel → hero
       if (wasInTunnel && !inTunnel && progress <= 0.02) {
         playWindBurst();
       }
       wasInTunnel = inTunnel;
 
-      // Lowpass sweep: open when idle, closes during tunnel
       if (bgFilterRef.current) {
         const minFreq = 300, maxFreq = 22000;
         const targetFreq = minFreq * Math.pow(maxFreq / minFreq, 1 - progress);
@@ -165,11 +177,10 @@ export default function AudioEngine() {
       }
     };
 
-    /* ── Synthesized click / hover ────────────────────────────────── */
     const playClickSound = () => {
       if (isMuted) return;
       try {
-        const ctx = getAudioCtx();
+        const ctx = ensureUnlocked();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -184,8 +195,9 @@ export default function AudioEngine() {
 
     const playHoverSound = () => {
       if (isMuted) return;
+      const ctx = getAudioCtxIfReady();
+      if (!ctx) return;
       try {
-        const ctx = getAudioCtx();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -198,11 +210,10 @@ export default function AudioEngine() {
       } catch(_) {}
     };
 
-    /* ── Logo plin ────────────────────────────────────────────────── */
     (window as any).__playLogoPlin = () => {
       if (isMuted) return;
       try {
-        const ctx = getAudioCtx();
+        const ctx = ensureUnlocked();
         const now = ctx.currentTime;
         [523.25, 783.99].forEach((freq, i) => {
           const osc    = ctx.createOscillator();
@@ -224,7 +235,6 @@ export default function AudioEngine() {
       } catch(_) {}
     };
 
-    /* ── Global event delegation ──────────────────────────────────── */
     const SELECTOR = 'button, a[href], .story-panel, .marker, .enter-gate';
 
     const onMouseOver = (e: MouseEvent) => {
@@ -240,6 +250,9 @@ export default function AudioEngine() {
     document.addEventListener('click',     onClick,     true);
 
     return () => {
+      document.removeEventListener('click', onFirstInteraction, true);
+      document.removeEventListener('touchstart', onFirstInteraction, true);
+      document.removeEventListener('keydown', onFirstInteraction, true);
       document.removeEventListener('mouseover', onMouseOver, true);
       document.removeEventListener('click',     onClick,     true);
       delete (window as any).__playBackgroundMusic;
@@ -252,8 +265,8 @@ export default function AudioEngine() {
 
   return (
     <>
-      <audio ref={bgMusicRef}   id="bgMusic"   src="/music-att.mp3"        loop preload="auto" />
-      <audio ref={shuaAudioRef} id="shuaAudio" src="/tunnel-sound-att.mp3" loop preload="auto" />
+      <audio ref={bgMusicRef}   id="bgMusic"   src="/music-att.mp3"        loop preload="none" />
+      <audio ref={shuaAudioRef} id="shuaAudio" src="/tunnel-sound-att.mp3" loop preload="none" />
     </>
   );
 }

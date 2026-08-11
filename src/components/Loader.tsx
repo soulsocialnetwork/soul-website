@@ -33,7 +33,13 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import gsap from 'gsap';
+
+/** GSAP carregado sob demanda — prefetch no hover do botão "entrar". */
+let gsapModule: Promise<typeof import('gsap')> | null = null;
+function loadGsap() {
+  if (!gsapModule) gsapModule = import('gsap');
+  return gsapModule;
+}
 
 /* ─── Tipos ─────────────────────────────────────────────────────── */
 declare global {
@@ -115,8 +121,22 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     if (h >= 19 || h < 6) document.body.classList.add('is-night');
   }, []);
 
+  /* Prefetch GSAP no hover — carrega antes do clique sem bloquear o parse inicial */
+  useEffect(() => {
+    const gate = enterGateRef.current;
+    if (!gate) return;
+    const prefetch = () => loadGsap();
+    gate.addEventListener('mouseenter', prefetch, { once: true });
+    gate.addEventListener('focus', prefetch, { once: true });
+    return () => {
+      gate.removeEventListener('mouseenter', prefetch);
+      gate.removeEventListener('focus', prefetch);
+    };
+  }, []);
+
   /* ── Sequência principal (GSAP) ───────────────────────────────── */
   const runSequence = useCallback(async () => {
+    const { default: gsap } = await loadGsap();
     const loader     = loaderRef.current!;
     const videoFrame = videoFrameRef.current!;
     const clipVideo  = clipVideoRef.current!;
@@ -255,7 +275,8 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
   }, [playLogoPlin, playBackgroundMusic, onEntered]);
 
   /* ── Click no botão "entrar." ────────────────────────────────── */
-  const handleEnter = useCallback(() => {
+  const handleEnter = useCallback(async () => {
+    const { default: gsap } = await loadGsap();
     const enterGate = enterGateRef.current!;
     const audioHint = audioHintRef.current;
 

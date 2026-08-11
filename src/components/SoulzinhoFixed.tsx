@@ -84,6 +84,7 @@ export default function SoulzinhoFixed() {
         className={`soul-video-layer is-active ${videoReady ? 'is-ready' : ''}`}
         src="/soulzinho-animacao-ofical-tela-inicial.webm"
         autoPlay loop muted playsInline
+        preload="metadata"
       />
       <p
         className={`soul-thought ${thought ? 'is-visible' : ''}`}

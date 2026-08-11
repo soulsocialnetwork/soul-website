@@ -246,8 +246,10 @@ export default function StoryUI() {
             loop
             muted
             playsInline
-            src="/assets/soulzinho.mp4"
-          />
+            preload="none"
+          >
+            <source src="/soulzinho-animacao-ofical-tela-inicial.webm" type="video/webm" />
+          </video>
         </div>
 
         <p className={`story-text ${isComment ? 'is-comment' : ''}`} aria-hidden="true">
