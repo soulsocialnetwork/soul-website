@@ -107,13 +107,35 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
     };
   }, []);
 
+  const revealSite = useCallback(() => {
+    const site = document.getElementById('site');
+    const loader = loaderRef.current;
+    if (site) {
+      site.classList.add('is-visible');
+      site.style.opacity = '1';
+      site.style.transform = 'scale(1)';
+    }
+    if (loader) {
+      loader.classList.add('is-out');
+      loader.style.pointerEvents = 'none';
+    }
+    onEntered?.();
+  }, [onEntered]);
+
   const runSequence = useCallback(async () => {
-    const { default: gsap } = await loadGsap();
-    const loader     = loaderRef.current!;
-    const videoFrame = videoFrameRef.current!;
-    const clipVideo  = clipVideoRef.current!;
-    const logoWrap   = logoWrapRef.current!;
+    const loader     = loaderRef.current;
+    const videoFrame = videoFrameRef.current;
+    const clipVideo  = clipVideoRef.current;
+    const logoWrap   = logoWrapRef.current;
     const site       = document.getElementById('site');
+
+    if (!loader || !videoFrame || !clipVideo || !logoWrap) {
+      revealSite();
+      return;
+    }
+
+    try {
+    const { default: gsap } = await loadGsap();
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     gsap.set(videoFrame, { opacity: 0, scale: 0.96, display: 'block' });
@@ -210,6 +232,7 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       duration: 0.9,
       ease: 'power3.out',
       pointerEvents: 'none',
+      onComplete: () => loader.classList.add('is-out'),
     });
 
     if (site) {
@@ -219,17 +242,22 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
         duration: 1,
         delay: 0.2,
         ease: 'power3.out',
-        onComplete: () => {
-          site.classList.add('is-visible');
-          onEntered?.();
-        },
+        onComplete: () => revealSite(),
       });
     }
 
     setTimeout(() => {
       loader.style.display = 'none';
     }, 900);
-  }, [playLogoPlin, playBackgroundMusic, onEntered, startGrain]);
+    } catch (err) {
+      console.error('[Loader]', err);
+      if (loader) {
+        loader.style.opacity = '0';
+        loader.style.display = 'none';
+      }
+      revealSite();
+    }
+  }, [playLogoPlin, playBackgroundMusic, revealSite, startGrain]);
 
   const handleEnter = useCallback(async () => {
     const { default: gsap } = await loadGsap();
