@@ -8,8 +8,10 @@ const MAX_SHIFT      = 6;
 const SECTIONS_END   = HERO_SPAN + MAX_SHIFT;
 const TOTAL_PROGRESS = SECTIONS_END + RETURN_SPAN;
 const LERP           = 0.06;
+const MOBILE_LERP    = 0.14;
 const WHEEL_K        = 0.00022;
 const TOUCH_K        = 0.0009;
+const MOBILE_TOUCH_K = 0.0026;
 const SHIFT_EPS      = 0.001;
 
 const STORY_ORDER = ['intro','s2','s3','s4','s5','s6','s7'];
@@ -20,9 +22,11 @@ function smoothstep(min: number, max: number, value: number) {
   return x * x * (3 - 2 * x);
 }
 
-function clampShiftDelta(shift: number, deltaShift: number): number {
+function clampShiftDelta(shift: number, deltaShift: number, relaxed = false): number {
   let newShift = shift + deltaShift;
   newShift = Math.max(0, Math.min(MAX_SHIFT, newShift));
+
+  if (relaxed) return newShift;
 
   if (deltaShift > 0) {
     const frac = shift - Math.floor(shift);
@@ -46,6 +50,7 @@ function isInWhiteSections(p: number): boolean {
 function applyScrollDelta(
   currentProgress: number,
   delta: number,
+  relaxedSectionSnap = false,
 ): number {
   if (isInWhiteSections(currentProgress)) {
     const shift = currentProgress - HERO_SPAN;
@@ -59,7 +64,7 @@ function applyScrollDelta(
       return currentProgress + delta;
     }
 
-    const newShift = clampShiftDelta(shift, delta);
+    const newShift = clampShiftDelta(shift, delta, relaxedSectionSnap);
     return HERO_SPAN + newShift;
   }
 
@@ -96,16 +101,31 @@ export default function ScrollEngine() {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const warpOverlay     = document.getElementById('warpOverlay');
-    const heroContentEl   = document.querySelector('.hero-content')    as HTMLElement | null;
-    const heroActionsEl   = document.querySelector('.hero-actions')    as HTMLElement | null;
-    const cosmicMarkersEl = document.querySelector('.cosmic-markers')  as HTMLElement | null;
     const sectionsTrackEl = document.getElementById('sectionsTrack')   as HTMLElement | null;
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    let isMobileLayout = window.matchMedia('(max-width: 1023px)').matches;
+    const mobileLayoutMq = window.matchMedia('(max-width: 1023px)');
 
     function setHeroOpacity(tunnelP: number) {
       const fade = 1 - smoothstep(0.1, 0.7, tunnelP);
-      [heroContentEl, heroActionsEl, cosmicMarkersEl].forEach(el => {
-        if (el) el.style.opacity = String(fade);
-      });
+      document.documentElement.style.setProperty('--hero-ui-opacity', String(fade));
+    }
+
+    function updateHeroScrollHint(trackOpacity: number, tunnelP: number) {
+      if (!scrollIndicator || isMobileLayout) return;
+
+      const siteReady = document.getElementById('site')?.classList.contains('is-visible');
+      const onHero = !isStoryActive && !!siteReady && trackOpacity <= 0.06 && tunnelP < 0.12;
+      const wasHeroHint = scrollIndicator.classList.contains('is-hero-hint');
+
+      scrollIndicator.classList.toggle('is-hero-hint', onHero);
+
+      if (onHero) {
+        scrollIndicator.classList.add('is-visible');
+      } else if (wasHeroHint) {
+        scrollIndicator.classList.remove('is-visible');
+      }
     }
 
     if (prefersReduced) {
@@ -125,6 +145,22 @@ export default function ScrollEngine() {
     let currentFilteredIndex = -1;
     const sectionEls = SECTION_IDS.map(id => document.getElementById(id));
 
+    const onMobileLayoutChange = () => {
+      isMobileLayout = mobileLayoutMq.matches;
+      if (isMobileLayout) {
+        scrollIndicator?.classList.remove('is-visible', 'is-hero-hint');
+      }
+      if (!isMobileLayout) {
+        sectionsTrackEl?.classList.remove('is-mobile-snap', 'is-mobile-scroll-active');
+        sectionEls.forEach(el => {
+          el?.classList.remove('is-mobile-active', 'is-mobile-entering', 'is-mobile-leaving');
+          el?.style.removeProperty('--mobile-section-opacity');
+          el?.style.removeProperty('--mobile-section-y');
+        });
+      }
+    };
+    mobileLayoutMq.addEventListener('change', onMobileLayoutChange);
+
     function snapLoopToHero() {
       targetProgress = 0;
       smoothProgress = 0;
@@ -135,7 +171,7 @@ export default function ScrollEngine() {
 
     function applyScrollTarget(delta: number) {
       const prev = targetProgress;
-      targetProgress = applyScrollDelta(targetProgress, delta);
+      targetProgress = applyScrollDelta(targetProgress, delta, isMobileLayout);
       if (targetProgress === 0 && prev >= TOTAL_PROGRESS - SHIFT_EPS) {
         snapLoopToHero();
       }
@@ -160,6 +196,72 @@ export default function ScrollEngine() {
       isStoryActive = false;
     };
 
+    let scrollFadeTimer = 0;
+
+    function markMobileScrollFade(direction: 'up' | 'down') {
+      if (!isMobileLayout) return;
+      if (!document.body.classList.contains('in-white-section')) return;
+
+      document.body.classList.add('is-mobile-section-scrolling');
+      document.body.classList.toggle('is-scroll-up', direction === 'up');
+      document.body.classList.toggle('is-scroll-down', direction === 'down');
+
+      window.clearTimeout(scrollFadeTimer);
+      scrollFadeTimer = window.setTimeout(() => {
+        document.body.classList.remove(
+          'is-mobile-section-scrolling',
+          'is-scroll-up',
+          'is-scroll-down',
+        );
+      }, 580);
+    }
+
+    function updateMobileSections(shift: number, trackOpacity: number) {
+      if (!isMobileLayout || !sectionsTrackEl) return;
+
+      sectionsTrackEl.style.transform = 'none';
+      sectionsTrackEl.classList.toggle('is-mobile-snap', trackOpacity > 0.05);
+      sectionsTrackEl.classList.toggle(
+        'is-mobile-scroll-active',
+        trackOpacity > 0.5 && Math.abs(targetProgress - smoothProgress) > 0.004,
+      );
+
+      sectionEls.forEach(el => {
+        if (!el) return;
+        el.classList.remove('is-mobile-active', 'is-mobile-entering', 'is-mobile-leaving');
+        el.style.removeProperty('--mobile-section-opacity');
+        el.style.removeProperty('--mobile-section-y');
+      });
+
+      if (trackOpacity <= 0.5) return;
+
+      const idx = Math.min(Math.floor(shift + 1e-9), SECTION_IDS.length - 1);
+      const frac = shift - idx;
+      const hasNext = idx < SECTION_IDS.length - 1 && frac > 0.004;
+
+      const paintSection = (
+        el: HTMLElement | null,
+        opacity: number,
+        yVh: number,
+        entering = false,
+        leaving = false,
+      ) => {
+        if (!el) return;
+        el.classList.add('is-mobile-active');
+        if (entering) el.classList.add('is-mobile-entering');
+        if (leaving) el.classList.add('is-mobile-leaving');
+        el.style.setProperty('--mobile-section-opacity', opacity.toFixed(3));
+        el.style.setProperty('--mobile-section-y', `${yVh.toFixed(2)}vh`);
+      };
+
+      if (hasNext) {
+        paintSection(sectionEls[idx], 1 - frac, -frac * 12, false, true);
+        paintSection(sectionEls[idx + 1], frac, (1 - frac) * 12, true, false);
+      } else {
+        paintSection(sectionEls[idx], 1, 0);
+      }
+    }
+
     function applyProgress(p: number) {
       let tunnelP: number, trackOpacity: number, shift: number;
 
@@ -181,11 +283,23 @@ export default function ScrollEngine() {
 
       if (warpOverlay) warpOverlay.style.opacity = String(smoothstep(0.2, 0.95, tunnelP));
       setHeroOpacity(tunnelP);
+      updateHeroScrollHint(trackOpacity, tunnelP);
 
       if (sectionsTrackEl) {
         sectionsTrackEl.style.opacity   = String(trackOpacity);
         sectionsTrackEl.classList.toggle('is-active', trackOpacity > 0.5);
-        sectionsTrackEl.style.transform = `translate3d(-${shift * 100}vw, 0, 0)`;
+
+        if (isMobileLayout) {
+          updateMobileSections(shift, trackOpacity);
+        } else {
+          sectionsTrackEl.classList.remove('is-mobile-snap', 'is-mobile-scroll-active');
+          sectionsTrackEl.style.transform = `translate3d(-${shift * 100}vw, 0, 0)`;
+          sectionEls.forEach(el => {
+            el?.classList.remove('is-mobile-active', 'is-mobile-entering', 'is-mobile-leaving');
+            el?.style.removeProperty('--mobile-section-opacity');
+            el?.style.removeProperty('--mobile-section-y');
+          });
+        }
       }
 
       const section7El = sectionEls[SECTION_IDS.length - 1];
@@ -209,6 +323,19 @@ export default function ScrollEngine() {
         document.body.classList.add('in-white-section');
       } else {
         document.body.classList.remove('in-white-section');
+        document.body.classList.remove(
+          'is-mobile-section-scrolling',
+          'is-scroll-up',
+          'is-scroll-down',
+        );
+      }
+
+      if (
+        isMobileLayout &&
+        trackOpacity > 0.5 &&
+        Math.abs(targetProgress - smoothProgress) > 0.004
+      ) {
+        markMobileScrollFade(targetProgress > smoothProgress ? 'down' : 'up');
       }
 
       if (trackOpacity > 0.5 && !isStoryActive) {
@@ -241,23 +368,43 @@ export default function ScrollEngine() {
 
       e.preventDefault();
       if (e.deltaY === 0) return;
+      if (isMobileLayout && document.body.classList.contains('in-white-section')) {
+        markMobileScrollFade(e.deltaY > 0 ? 'down' : 'up');
+      }
       const delta = e.deltaY * WHEEL_K;
       applyScrollTarget(delta);
     };
 
     let touchStartY = 0;
-    const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
+    let touchStartX = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    };
     const onTouchMove  = (e: TouchEvent) => {
       if (isStoryActive) {
         e.preventDefault();
         return;
       }
 
+      const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
+      const deltaY = touchStartY - touchY;
+      const deltaX = touchStartX - touchX;
+      touchStartY = touchY;
+      touchStartX = touchX;
+
+      if (isMobileLayout && Math.abs(deltaX) > Math.abs(deltaY)) {
+        e.preventDefault();
+        return;
+      }
+
       e.preventDefault();
-      const delta = touchStartY - e.touches[0].clientY;
-      touchStartY = e.touches[0].clientY;
-      if (delta === 0) return;
-      applyScrollTarget(delta * TOUCH_K);
+      if (deltaY === 0) return;
+      if (isMobileLayout && document.body.classList.contains('in-white-section')) {
+        markMobileScrollFade(deltaY > 0 ? 'down' : 'up');
+      }
+      applyScrollTarget(deltaY * (isMobileLayout ? MOBILE_TOUCH_K : TOUCH_K));
     };
 
     window.addEventListener('wheel',      onWheel,      { passive: false } as any);
@@ -273,7 +420,7 @@ export default function ScrollEngine() {
         smoothProgress = 0;
       }
 
-      smoothProgress += (targetProgress - smoothProgress) * LERP;
+      smoothProgress += (targetProgress - smoothProgress) * (isMobileLayout ? MOBILE_LERP : LERP);
       smoothProgress = Math.min(Math.max(smoothProgress, 0), TOTAL_PROGRESS);
       applyProgress(smoothProgress);
       rafId = requestAnimationFrame(render);
@@ -292,11 +439,25 @@ export default function ScrollEngine() {
       window.removeEventListener('touchstart',      onTouchStart);
       window.removeEventListener('touchmove',       onTouchMove);
       document.removeEventListener('visibilitychange', onVisibility);
+      mobileLayoutMq.removeEventListener('change', onMobileLayoutChange);
+      window.clearTimeout(scrollFadeTimer);
+      document.body.classList.remove(
+        'is-mobile-section-scrolling',
+        'is-scroll-up',
+        'is-scroll-down',
+      );
 
       delete (window as any).__lockScroll;
       delete (window as any).__unlockScroll;
 
-      sectionEls.forEach(el => el?.classList.remove('is-current-section', 'is-section-ready'));
+      sectionEls.forEach(el => {
+        el?.classList.remove('is-current-section', 'is-section-ready', 'is-mobile-active', 'is-mobile-entering', 'is-mobile-leaving');
+        el?.style.removeProperty('--mobile-section-opacity');
+        el?.style.removeProperty('--mobile-section-y');
+      });
+      sectionsTrackEl?.classList.remove('is-mobile-snap', 'is-mobile-scroll-active');
+      scrollIndicator?.classList.remove('is-visible', 'is-hero-hint');
+      document.documentElement.style.removeProperty('--hero-ui-opacity');
     };
   }, []);
 

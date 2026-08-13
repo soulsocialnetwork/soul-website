@@ -266,7 +266,7 @@ export default function StoryUI() {
             height={36}
           >
             <source src="/soulzinho-animacao-ofical-tela-inicial.webm" type="video/webm" />
-            <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+            <track kind="captions" src="/tracks/silent.vtt" srcLang="pt" label="Português" />
           </video>
         </div>
 

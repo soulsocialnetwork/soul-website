@@ -120,6 +120,177 @@ void main() {
 }
 `;
 
+// mobile: mesmo shader, lens desligada via uniform
+const FRAG_SRC_MOBILE = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform vec2  u_resolution;
+uniform float u_time;
+uniform vec2  u_mouse;
+uniform float u_progress;
+uniform float u_lens_strength;
+
+float hash(vec2 p) {
+    p = 50.0 * fract(p * 0.3183099 + vec2(0.71, 0.113));
+    return -1.0 + 2.0 * fract(p.x * p.y * (p.x + p.y));
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+              mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float f = 0.0;
+    float w = 0.5;
+    for (int i = 0; i < 5; i++) {
+        f += w * noise(p);
+        p *= 2.0;
+        w *= 0.5;
+    }
+    return f;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+
+    float mDist = length(uv - u_mouse);
+    float lensPull = 0.035 / (mDist + 0.08);
+    uv -= normalize(uv - u_mouse + vec2(0.0001)) * lensPull * 0.12 * u_lens_strength;
+
+    float zoom = 1.0 + pow(u_progress, 2.4) * 24.0;
+    uv /= zoom;
+
+    float d = length(uv);
+
+    float twist     = 4.5;
+    float spinSpeed = 0.15 + pow(u_progress, 2.0) * 8.0;
+    float angle     = -u_time * spinSpeed - log(d + 0.001) * twist;
+
+    float s = sin(angle), c = cos(angle);
+    mat2 rotMat = mat2(c, -s, s, c);
+    vec2 p = uv * rotMat;
+
+    float arms     = 2.0;
+    float spiral   = cos(arms * atan(p.y, p.x));
+
+    float n         = fbm(p * 10.0 - u_time * 0.015);
+    float structure = smoothstep(-0.2, 1.3, spiral + n * 1.5);
+
+    float falloff = exp(-d * 4.5);
+    structure *= falloff;
+    float core = exp(-d * 22.0);
+
+    vec3 bg        = vec3(0.04, 0.04, 0.047);
+    vec3 dustColor = vec3(0.15, 0.15, 0.15);
+    vec3 armColor  = vec3(0.35, 0.35, 0.45);
+    vec3 coreColor = vec3(0.7,  0.7,  0.7);
+
+    vec3 col = bg;
+    col = mix(col, dustColor, smoothstep(0.0, 1.0, n) * falloff * 1.2);
+    col += armColor  * structure * 1.8;
+    col += coreColor * core      * 3.0;
+
+    float h2 = smoothstep(0.6, 1.0, fbm(p * 20.0)) * structure;
+    col += vec3(0.9, 0.9, 0.9) * h2 * 1.8;
+
+    float starHash  = fract(sin(dot(uv * 180.0, vec2(12.9898, 78.233))) * 43758.5453);
+    float starfield = step(0.995, starHash) * (starHash - 0.995) * 200.0;
+    col += vec3(1.0) * starfield * max(falloff, 0.15);
+
+    {
+      float effectProgress = max(u_progress, 0.03);
+      float ang    = atan(uv.y, uv.x);
+      float radius = length(uv) + 0.0008;
+
+      float sectors    = 160.0;
+      float sector     = floor(ang * sectors);
+      float sectorHash = fract(sin(sector * 91.345) * 47453.5);
+
+      float speed       = u_time * 1.2 + pow(u_progress, 2.0) * 35.0;
+      float radialCoord = fract(1.0 / radius * 0.55 - speed + sectorHash * 3.0);
+
+      float trailLength = mix(0.02, 0.95, effectProgress);
+      float line        = smoothstep(trailLength, 0.0, radialCoord);
+
+      line *= step(0.32, sectorHash);
+
+      float tunnel      = line / (radius * 2.0 + 0.1);
+      vec3  tunnelColor = mix(vec3(0.45, 0.5, 0.75), vec3(1.0, 1.0, 1.0), u_progress);
+
+      col += tunnelColor * tunnel * effectProgress * 8.5;
+    }
+
+    col += vec3(1.0) * pow(u_progress, 2.0) * 1.1;
+    col *= smoothstep(1.5, 0.2, d);
+
+    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`;
+
+const MOBILE_DPR_CAP = 1.5;
+const MOBILE_RENDER_SCALE = 0.88;
+const MOBILE_TARGET_FPS = 24;
+
+const MOBILE_WEAK_DPR_CAP = 1.15;
+const MOBILE_WEAK_RENDER_SCALE = 0.68;
+const MOBILE_WEAK_TARGET_FPS = 20;
+
+type ShaderTier = 'desktop' | 'mobile' | 'mobile-weak';
+
+interface TierConfig {
+  dprCap: number;
+  renderScale: number;
+  targetFps: number;
+  lensStrength: number;
+}
+
+const TIER_CONFIG: Record<ShaderTier, TierConfig> = {
+  desktop:     { dprCap: 2,    renderScale: 1,    targetFps: 0,  lensStrength: 1 },
+  mobile:      { dprCap: MOBILE_DPR_CAP, renderScale: MOBILE_RENDER_SCALE, targetFps: MOBILE_TARGET_FPS, lensStrength: 0 },
+  'mobile-weak': { dprCap: MOBILE_WEAK_DPR_CAP, renderScale: MOBILE_WEAK_RENDER_SCALE, targetFps: MOBILE_WEAK_TARGET_FPS, lensStrength: 0 },
+};
+
+function isMobileShaderProfile() {
+  return window.matchMedia('(max-width: 900px) and (pointer: coarse)').matches;
+}
+
+function readGpuWeakScore(gl: WebGLRenderingContext): number {
+  try {
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    if (!ext) return 0;
+    const renderer = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '').toLowerCase();
+    if (/swiftshader|llvmpipe|softpipe/.test(renderer)) return 3;
+    if (/adreno \(tm\) [23]|adreno [23][0-9]{2}|mali-4|powervr sgx|videocore|intel hd|sgx/.test(renderer)) return 2;
+    if (/adreno \(tm\) [45]0[0-5]|mali-g31|mali-g51|mali-t6|mali-t7/.test(renderer)) return 1;
+  } catch (_) {}
+  return 0;
+}
+
+function detectShaderTier(gl?: WebGLRenderingContext | null): ShaderTier {
+  if (!isMobileShaderProfile()) return 'desktop';
+
+  let weakScore = 0;
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const cores = navigator.hardwareConcurrency || 4;
+  const dpr = window.devicePixelRatio || 1;
+
+  if (mem !== undefined && mem <= 2) weakScore += 2;
+  else if (mem !== undefined && mem <= 3) weakScore += 1;
+  if (cores <= 4) weakScore += 1;
+  if (dpr >= 3) weakScore += 1;
+  if (gl) weakScore += readGpuWeakScore(gl);
+
+  return weakScore >= 3 ? 'mobile-weak' : 'mobile';
+}
+
 function compileShader(gl: WebGLRenderingContext, type: number, src: string) {
   const s = gl.createShader(type);
   if (!s) return null;
@@ -161,12 +332,39 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
     let uTime: WebGLUniformLocation | null = null;
     let uMouse: WebGLUniformLocation | null = null;
     let uProgress: WebGLUniformLocation | null = null;
+    let uLens: WebGLUniformLocation | null = null;
 
     let rafId = 0;
     let isContextLost = false;
 
     let targetMouseX = 0, targetMouseY = 0;
     let currentMouseX = 0, currentMouseY = 0;
+
+    let tier: ShaderTier = 'desktop';
+    let tierConfig: TierConfig = TIER_CONFIG.desktop;
+    let dpr = 2;
+    let renderScale = 1;
+    let frameInterval = 0;
+    let lensStrength = 1;
+
+    let frameTimeSamples = 0;
+    let frameTimeTotal = 0;
+    let tierDowngraded = false;
+    let staticMode = false;
+    let siteObserver: MutationObserver | null = null;
+
+    const applyTier = (nextTier: ShaderTier) => {
+      tier = nextTier;
+      tierConfig = TIER_CONFIG[nextTier];
+      dpr = Math.min(window.devicePixelRatio || 1, tierConfig.dprCap);
+      renderScale = tierConfig.renderScale;
+      frameInterval = tierConfig.targetFps > 0 ? 1000 / tierConfig.targetFps : 0;
+      lensStrength = tierConfig.lensStrength;
+      (window as any).__shaderTier = tier;
+    };
+
+    const mobileProfile = isMobileShaderProfile();
+    if (!mobileProfile) applyTier('desktop');
 
     const setPointer = (clientX: number, clientY: number) => {
       const minD = Math.min(window.innerWidth, window.innerHeight);
@@ -175,12 +373,16 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       targetMouseY = -(clientY - 0.5 * window.innerHeight) / minD;
     };
 
-    const onMouseMove = (e: MouseEvent) => setPointer(e.clientX, e.clientY);
+    const onMouseMove = (e: MouseEvent) => {
+      if (mobileProfile && lensStrength <= 0) return;
+      setPointer(e.clientX, e.clientY);
+    };
     const onTouchMove = (e: TouchEvent) => {
+      if (mobileProfile && lensStrength <= 0) return;
       if (e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY);
     };
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let lastFrameTime = 0;
     let cw = 0, ch = 0;
 
     // mobile: usa viewport se canvas ainda sem layout
@@ -195,8 +397,8 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       }
       if (clientW <= 0 || clientH <= 0) return;
 
-      const dw = Math.round(clientW * dpr);
-      const dh = Math.round(clientH * dpr);
+      const dw = Math.round(clientW * dpr * renderScale);
+      const dh = Math.round(clientH * dpr * renderScale);
 
       if (canvas.width !== dw || canvas.height !== dh) {
         canvas.width  = dw;
@@ -207,23 +409,36 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       ch = dh;
     };
 
+    const getGLContext = () => {
+      const attrs: WebGLContextAttributes = {
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+      };
+      return (
+        canvas.getContext('webgl', attrs) ||
+        canvas.getContext('webgl', { alpha: false }) ||
+        canvas.getContext('webgl') ||
+        canvas.getContext('experimental-webgl')
+      ) as WebGLRenderingContext | null;
+    };
+
     const initGL = () => {
       if (!canvas) return false;
 
-      gl = (canvas.getContext('webgl', { powerPreference: 'high-performance' }) ||
-            canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
-
+      cleanupGL();
+      gl = getGLContext();
       if (!gl) return false;
 
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) {
-        gl.clearColor(0.04, 0.04, 0.047, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        return false;
-      }
+      applyTier(isMobileShaderProfile() ? detectShaderTier(gl) : 'desktop');
+      staticMode = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+      const fragSrc = isMobileShaderProfile() ? FRAG_SRC_MOBILE : FRAG_SRC;
       vertShader = compileShader(gl, gl.VERTEX_SHADER, VERT_SRC);
-      fragShader = compileShader(gl, gl.FRAGMENT_SHADER, FRAG_SRC);
+      fragShader = compileShader(gl, gl.FRAGMENT_SHADER, fragSrc);
       if (!vertShader || !fragShader) return false;
 
       program = gl.createProgram();
@@ -252,6 +467,7 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       uTime     = gl.getUniformLocation(program, 'u_time');
       uMouse    = gl.getUniformLocation(program, 'u_mouse');
       uProgress = gl.getUniformLocation(program, 'u_progress');
+      uLens     = isMobileShaderProfile() ? gl.getUniformLocation(program, 'u_lens_strength') : null;
 
       resize();
       return true;
@@ -286,27 +502,57 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       if (initGL()) startLoop();
     };
 
-    canvas.addEventListener('webglcontextlost', handleContextLost, false);
-    canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
-
-    if (!initGL()) {
-      return () => {
-        canvas.removeEventListener('webglcontextlost', handleContextLost);
-        canvas.removeEventListener('webglcontextrestored', handleContextRestored);
-      };
-    }
-
     const startTime = performance.now();
+
+    const shouldSkipMobileFrame = () => {
+      if (tier === 'desktop') return false;
+      if (document.hidden) return true;
+      const track = document.getElementById('sectionsTrack');
+      if (!track?.classList.contains('is-active')) return false;
+      const opacity = parseFloat(getComputedStyle(track).opacity);
+      return opacity > 0.55;
+    };
+
+    const maybeDowngradeTier = (frameMs: number) => {
+      if (tier !== 'mobile' || tierDowngraded) return;
+      frameTimeSamples += 1;
+      frameTimeTotal += frameMs;
+      if (frameTimeSamples < 48) return;
+      const avg = frameTimeTotal / frameTimeSamples;
+      if (avg > 46) {
+        tierDowngraded = true;
+        applyTier('mobile-weak');
+        resize();
+      }
+    };
 
     const render = (now: number) => {
       if (isContextLost || !gl || !program) return;
 
+      if (!staticMode) {
+        if (frameInterval > 0 && now - lastFrameTime < frameInterval) {
+          rafId = requestAnimationFrame(render);
+          return;
+        }
+
+        if (shouldSkipMobileFrame()) {
+          rafId = requestAnimationFrame(render);
+          return;
+        }
+      }
+
+      const frameMs = lastFrameTime > 0 ? now - lastFrameTime : 0;
+      lastFrameTime = now;
+      maybeDowngradeTier(frameMs);
+
       if (cw <= 0 || ch <= 0) resize();
 
-      const elapsed = (now - startTime) / 1000;
+      const elapsed = staticMode ? 0 : (now - startTime) / 1000;
 
-      currentMouseX += (targetMouseX - currentMouseX) * 0.08;
-      currentMouseY += (targetMouseY - currentMouseY) * 0.08;
+      if (!mobileProfile || lensStrength > 0) {
+        currentMouseX += (targetMouseX - currentMouseX) * 0.08;
+        currentMouseY += (targetMouseY - currentMouseY) * 0.08;
+      }
 
       const safeCw       = (Number.isNaN(cw) || cw <= 0) ? canvas.width  || window.innerWidth  : cw;
       const safeCh       = (Number.isNaN(ch) || ch <= 0) ? canvas.height || window.innerHeight : ch;
@@ -320,8 +566,11 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       gl.uniform1f(uTime,     safeTime);
       gl.uniform2f(uMouse,    safeMouseX, safeMouseY);
       gl.uniform1f(uProgress, safeProgress);
+      if (uLens) gl.uniform1f(uLens, lensStrength);
 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      if (staticMode) return;
       rafId = requestAnimationFrame(render);
     };
 
@@ -330,10 +579,58 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       rafId = requestAnimationFrame(render);
     };
 
-    startLoop();
+    const waitForSiteVisible = () =>
+      new Promise<void>((resolve) => {
+        const site = document.getElementById('site');
+        if (site?.classList.contains('is-visible')) {
+          resolve();
+          return;
+        }
+        siteObserver = new MutationObserver(() => {
+          if (site?.classList.contains('is-visible')) {
+            siteObserver?.disconnect();
+            siteObserver = null;
+            resolve();
+          }
+        });
+        if (site) {
+          siteObserver.observe(site, { attributes: true, attributeFilter: ['class'] });
+        }
+        window.setTimeout(() => {
+          siteObserver?.disconnect();
+          siteObserver = null;
+          resolve();
+        }, 25000);
+      });
+
+    const bootShader = async () => {
+      await waitForSiteVisible();
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
+      if (!initGL()) {
+        await new Promise(resolve => window.setTimeout(resolve, 150));
+        if (!initGL()) {
+          console.error('[HeroShader] WebGL init failed');
+          canvas.style.background = '#0a0a0c';
+          return;
+        }
+      }
+
+      canvas.style.background = '';
+      startLoop();
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
+
+    void bootShader();
 
     window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    if (!mobileProfile || lensStrength > 0) {
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+    }
     window.addEventListener('resize', resize);
 
     // redimensiona quando site aparece após loader
@@ -358,6 +655,8 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
+      siteObserver?.disconnect();
+      siteObserver = null;
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('resize', resize);
@@ -366,6 +665,7 @@ const HeroShader = forwardRef<HeroShaderHandle>((_, ref) => {
       canvas.removeEventListener('webglcontextlost', handleContextLost);
       canvas.removeEventListener('webglcontextrestored', handleContextRestored);
       delete (window as any).__shaderSetProgress;
+      delete (window as any).__shaderTier;
       cleanupGL();
     };
   }, []);

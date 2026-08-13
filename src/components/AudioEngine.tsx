@@ -15,16 +15,28 @@ export default function AudioEngine() {
     let isMuted = false;
     let wasInTunnel = false;
 
-    // audiocontext só após gesto do usuário
-    function unlockFromGesture(): void {
-      if (!ctxRef.current) {
-        ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        bgMusicRef.current?.load();
-        shuaAudioRef.current?.load();
+    let gestureUnlocked = false;
+
+    // audiocontext só após gesto confiável do usuário
+    function unlockFromGesture(e?: Event): boolean {
+      if (e && 'isTrusted' in e && !e.isTrusted) return false;
+      if (gestureUnlocked && ctxRef.current?.state === 'running') return true;
+
+      try {
+        if (!ctxRef.current) {
+          ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+          bgMusicRef.current?.load();
+          shuaAudioRef.current?.load();
+        }
+        if (ctxRef.current.state === 'suspended') {
+          void ctxRef.current.resume().catch(() => {});
+        }
+        gestureUnlocked = ctxRef.current.state === 'running';
+      } catch (_) {
+        return false;
       }
-      if (ctxRef.current.state === 'suspended') {
-        void ctxRef.current.resume();
-      }
+
+      return gestureUnlocked;
     }
 
     // nunca cria/retoma fora de gesto
@@ -34,8 +46,8 @@ export default function AudioEngine() {
       return ctx;
     }
 
-    const onFirstInteraction = () => {
-      unlockFromGesture();
+    const onFirstInteraction = (e: Event) => {
+      if (!unlockFromGesture(e)) return;
       document.removeEventListener('click', onFirstInteraction, true);
       document.removeEventListener('touchstart', onFirstInteraction, true);
       document.removeEventListener('keydown', onFirstInteraction, true);
@@ -127,7 +139,7 @@ export default function AudioEngine() {
     };
 
     (window as any).updateWormholeAudio = (progress: number, elapsed: number) => {
-      if (!ctxRef.current) return;
+      if (!gestureUnlocked) return;
       if (!bgMusicRef.current || !shuaAudioRef.current) return;
       const ctx = getRunningCtx();
       if (!ctx) return;
@@ -247,7 +259,7 @@ export default function AudioEngine() {
       playHoverSound();
     };
     const onClick = (e: MouseEvent) => {
-      unlockFromGesture();
+      if (!unlockFromGesture(e)) return;
       if ((e.target as HTMLElement).closest(SELECTOR)) playClickSound();
     };
 

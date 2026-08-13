@@ -56,7 +56,7 @@ de verdade.
               height={38}
               onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}
             >
-              <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+              <track kind="captions" src="/tracks/silent.vtt" srcLang="pt" label="Português" />
             </video>
           </div>
           <div className="marker-line" />

@@ -96,14 +96,18 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
   }, []);
 
   useEffect(() => {
+    loadGsap().catch(() => {});
+
     const gate = enterGateRef.current;
     if (!gate) return;
-    const prefetch = () => loadGsap();
+    const prefetch = () => { loadGsap().catch(() => {}); };
     gate.addEventListener('mouseenter', prefetch, { once: true });
     gate.addEventListener('focus', prefetch, { once: true });
+    gate.addEventListener('touchstart', prefetch, { once: true, passive: true });
     return () => {
       gate.removeEventListener('mouseenter', prefetch);
       gate.removeEventListener('focus', prefetch);
+      gate.removeEventListener('touchstart', prefetch);
     };
   }, []);
 
@@ -133,6 +137,11 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
       revealSite();
       return;
     }
+
+    const sequenceTimeout = window.setTimeout(() => {
+      console.warn('[Loader] sequence timeout — forcing reveal');
+      revealSite();
+    }, 22000);
 
     try {
     const { default: gsap } = await loadGsap();
@@ -256,31 +265,49 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
         loader.style.display = 'none';
       }
       revealSite();
+    } finally {
+      window.clearTimeout(sequenceTimeout);
     }
   }, [playLogoPlin, playBackgroundMusic, revealSite, startGrain]);
 
   const handleEnter = useCallback(async () => {
-    const { default: gsap } = await loadGsap();
-    const enterGate = enterGateRef.current!;
+    const enterGate = enterGateRef.current;
     const audioHint = audioHintRef.current;
+    if (!enterGate) return;
 
-    gsap.to(enterGate, {
-      opacity: 0,
-      scale: 0.85,
-      duration: 0.4,
-      ease: 'power3.out',
-      pointerEvents: 'none',
-    });
-    if (audioHint) {
-      gsap.to(audioHint, {
-        opacity: 0,
-        duration: 0.4,
-        ease: 'power3.out',
-      });
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      enterGate.style.opacity = '0';
+      enterGate.style.pointerEvents = 'none';
+      if (audioHint) audioHint.style.opacity = '0';
+      revealSite();
+      return;
     }
 
-    runSequence();
-  }, [runSequence]);
+    try {
+      const { default: gsap } = await loadGsap();
+
+      gsap.to(enterGate, {
+        opacity: 0,
+        scale: 0.85,
+        duration: 0.4,
+        ease: 'power3.out',
+        pointerEvents: 'none',
+      });
+      if (audioHint) {
+        gsap.to(audioHint, {
+          opacity: 0,
+          duration: 0.4,
+          ease: 'power3.out',
+        });
+      }
+
+      runSequence();
+    } catch (err) {
+      console.error('[Loader] enter failed:', err);
+      revealSite();
+    }
+  }, [runSequence, revealSite]);
 
   return (
     <>
@@ -340,7 +367,7 @@ export default function Loader({ onEntered }: { onEntered?: () => void }) {
           >
             <source src="/video-intro.webm" type="video/webm" />
             <source src="/video-intro-opt.mp4" type="video/mp4" />
-            <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+            <track kind="captions" src="/tracks/silent.vtt" srcLang="pt" label="Português" />
           </video>
         </div>
 

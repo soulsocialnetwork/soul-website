@@ -41,7 +41,7 @@ export default function SoulzinhoFixed() {
         width={200}
         height={200}
       >
-        <track kind="captions" src="/tracks/silent.vtt" srclang="pt" label="Português" />
+        <track kind="captions" src="/tracks/silent.vtt" srcLang="pt" label="Português" />
       </video>
     </div>
   );
